@@ -1,17 +1,17 @@
-import React from 'react'
-import { useState, useRef, useEffect } from 'react'
-import './UserForm.css'
+import React from "react";
+import { useState, useRef, useEffect } from "react";
+import "./UserForm.css";
+import { NavLink, useNavigate } from "react-router";
 
-export default function UserForm({
-  isRegister
-}) {
+export default function UserForm({ isRegister }) {
   const usernameRef = useRef();
   const errRef = useRef();
+
+  const navigate = useNavigate();
 
   const USER_REGEX = /^[A-z][A-z0-9-_]{3,23}$/;
   const PWD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%]).{8,24}$/;
   const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-
 
   const [username, setUsername] = useState("");
   const [validUsername, setValidUsername] = useState(false);
@@ -86,13 +86,112 @@ export default function UserForm({
     setEmail(newEmail);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     console.log("submit");
+    
+
+    
+
+    switch (isRegister) {
+      case true:
+        {
+        const isValidUsername = USER_REGEX.test(username);
+        const isValidEmail = EMAIL_REGEX.test(email);
+        const isValidPassword = PWD_REGEX.test(password);
+        if (!isValidUsername || !isValidEmail || !isValidPassword) {
+          setErrMsg("Invalid Entry");
+          return;
+        }
+        console.log("Valid Entry");
+        const userData = {
+          username: username,
+          email: email,
+          password: password
+        };
+        
+        const response = await fetch('http://localhost:3000/users', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(userData)
+        })
+        const data = await response.json();
+        console.log(data);
+        if (response.ok) {
+          setSuccess(true);
+          console.log("User registered successfully");
+          navigate("/signin");
+        }
+        else {
+          setErrMsg(data.message);
+          console.log("User registration failed");
+        }
+        setUsername("");
+        setPassword("");
+        setEmail("");
+        setMatchPassword("");
+        setValidUsername(false);
+        setValidPassword(false);
+        setValidEmail(false);
+        setValidMatch(false);
+        break;
+      }
+
+      case false:
+        {
+          const isValidEmail = EMAIL_REGEX.test(email);
+          const isValidPassword = PWD_REGEX.test(password);
+          if (!isValidEmail || !isValidPassword) {
+            setErrMsg("Invalid Entry");
+            return;
+          }
+        console.log("Valid Entry");
+        const userData = {
+          email: email,
+          password: password
+        };
+        
+        const response = await fetch('http://localhost:3000/login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(userData)
+        })
+        const data = await response.json();
+        console.log(data);
+        if (response.ok) {
+          setSuccess(true);
+          console.log("User logged in successfully");
+          localStorage.setItem("token", data.token);
+          localStorage.setItem("user", JSON.stringify({
+            email: data.email,
+            username: data.username,
+            id: data.id
+          }));
+          navigate("/home");
+        }
+        else {
+          setErrMsg(data.message);
+          console.log("User login failed");
+        }
+        setPassword("");
+        setEmail("");
+        setValidPassword(false);
+        setValidEmail(false);
+        break;
+      }
+    
+      default:
+        console.log("default case");
+        break;
+    }
   };
 
   return (
-    <div>
+    <div className="flex flex-col justify-center items-center gap-5">
       <p
         ref={errRef}
         className={errMsg ? "errmsg" : "offscreen"}
@@ -107,11 +206,7 @@ export default function UserForm({
         {/* username */}
         {isRegister && (
           <div className="flex flex-col">
-            <label htmlFor="username">
-              Username:
-              
-              
-            </label>
+            <label htmlFor="username">Username:</label>
             <input
               type="text"
               id="username"
@@ -155,7 +250,6 @@ export default function UserForm({
           </div>
         )}
 
-
         {/* email */}
         <div className="flex flex-col">
           <label htmlFor="email">Email:</label>
@@ -172,41 +266,34 @@ export default function UserForm({
             required
           ></input>
 
+          <p
+            id="emailnote"
+            className={
+              emailFocus && email && !validEmail ? "instructions" : "offscreen"
+            }
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth={1.5}
+              stroke="currentColor"
 
-<p
-              id="emailnote"
-              className={
-                emailFocus && email && !validEmail
-                  ? "instructions"
-                  : "offscreen"
-              }
+              className="size-6"
             >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth={1.5}
-                stroke="currentColor"
-                // className={
-                //   validPassword || !password ? "hide size-6" : "invalid size-6"
-                // }
-                className="size-6"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="m11.25 11.25.041-.02a.75.75 0 0 1 1.063.852l-.708 2.836a.75.75 0 0 0 1.063.853l.041-.021M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9-3.75h.008v.008H12V8.25Z"
-                />
-              </svg>
-              Must be a valid email address.
-            </p>
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="m11.25 11.25.041-.02a.75.75 0 0 1 1.063.852l-.708 2.836a.75.75 0 0 0 1.063.853l.041-.021M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9-3.75h.008v.008H12V8.25Z"
+              />
+            </svg>
+            Must be a valid email address.
+          </p>
         </div>
-
 
         {/* password */}
         <div className="flex flex-col">
-          <label htmlFor="password">Password:
-          </label>
+          <label htmlFor="password">Password:</label>
           <input
             type="text"
             id="password"
@@ -219,45 +306,37 @@ export default function UserForm({
             required
           ></input>
 
+          <p
+            id="pwdnote"
+            className={
+              passwordFocus && !validPassword ? "instructions" : "offscreen"
+            }
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth={1.5}
+              stroke="currentColor"
 
-            <p
-              id="pwdnote"
-              className={
-                passwordFocus && !validPassword
-                  ? "instructions"
-                  : "offscreen"
-              }
+              className="size-6"
             >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth={1.5}
-                stroke="currentColor"
-                // className={
-                //   validPassword || !password ? "hide size-6" : "invalid size-6"
-                // }
-                className="size-6"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="m11.25 11.25.041-.02a.75.75 0 0 1 1.063.852l-.708 2.836a.75.75 0 0 0 1.063.853l.041-.021M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9-3.75h.008v.008H12V8.25Z"
-                />
-              </svg>
-              Must inlude upper and lower letters.
-              <br />
-              specail characters allowed: !@#$%
-            </p>
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="m11.25 11.25.041-.02a.75.75 0 0 1 1.063.852l-.708 2.836a.75.75 0 0 0 1.063.853l.041-.021M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9-3.75h.008v.008H12V8.25Z"
+              />
+            </svg>
+            Must inlude upper and lower letters.
+            <br />
+            specail characters allowed: !@#$%
+          </p>
         </div>
-
 
         {/* match password */}
         {isRegister && (
           <div className="flex flex-col">
-            <label htmlFor="match-password">Password Match:
-            
-            </label>
+            <label htmlFor="match-password">Password Match:</label>
             <input
               type="text"
               id="match-password"
@@ -270,12 +349,10 @@ export default function UserForm({
               required
             ></input>
 
-<p
+            <p
               id="matchnote"
               className={
-                matchFocus && !validMatch
-                  ? "instructions"
-                  : "offscreen"
+                !validMatch ? "instructions" : "offscreen"
               }
             >
               <svg
@@ -284,9 +361,6 @@ export default function UserForm({
                 viewBox="0 0 24 24"
                 strokeWidth={1.5}
                 stroke="currentColor"
-                // className={
-                //   validMatch || !matchPassword ? "hide size-6" : "invalid size-6"
-                // }
                 className="size-6"
               >
                 <path
@@ -300,12 +374,23 @@ export default function UserForm({
           </div>
         )}
 
-        <button type="submit">Submit</button>
+        <button
+          type="submit"
+          className="btn btn-primary cursor-pointer"
+          disabled={
+            isRegister
+              ? !validUsername || !validEmail || !validPassword || !validMatch
+              : !validEmail || !validPassword
+          }
+        >{isRegister ? "Sign Up" : "Sign In"}</button>
       </form>
+      <p>
+        Already registered ?
+        <br />
+        <span className="line">
+          <NavLink to="/signin">Sign In</NavLink>
+        </span>
+      </p>
     </div>
   );
 }
-
-
-
-
