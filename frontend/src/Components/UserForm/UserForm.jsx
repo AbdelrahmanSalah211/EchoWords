@@ -1,17 +1,32 @@
-import React from "react";
+import React, { useContext } from "react";
 import { useState, useRef, useEffect } from "react";
-import "./UserForm.css";
 import { NavLink, useNavigate } from "react-router";
+import AuthContext from "../../Context/AuthProvider";
+import Joi from "joi";
 
 export default function UserForm({ isRegister }) {
+  const schema = Joi.object({
+    username: Joi.string().min(3).required().label('Username'),
+  
+    email: Joi.string()
+      .email({ tlds: { allow: false } })
+      .required()
+      .label('Email'),
+  
+    password: Joi.string()
+      .pattern(new RegExp('^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[^a-zA-Z0-9]).{8,}$'))
+      .required()
+      .label('Password')
+      .messages({
+        'string.pattern.base': `"Password" must contain at least 1 uppercase, 1 lowercase, 1 number, 1 special character and be at least 8 characters long.`,
+      }),
+  });
+  
+
   const usernameRef = useRef();
   const errRef = useRef();
 
   const navigate = useNavigate();
-
-  const USER_REGEX = /^[A-z][A-z0-9-_]{3,23}$/;
-  const PWD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%]).{8,24}$/;
-  const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 
   const [username, setUsername] = useState("");
   const [validUsername, setValidUsername] = useState(false);
@@ -31,6 +46,7 @@ export default function UserForm({ isRegister }) {
   const [email, setEmail] = useState("");
   const [validEmail, setValidEmail] = useState(false);
   const [emailFocus, setEmailFocus] = useState(false);
+  const { auth, setAuth } = useContext(AuthContext);
 
   useEffect(() => {
     if (isRegister) {
@@ -39,24 +55,24 @@ export default function UserForm({ isRegister }) {
   }, []);
 
   useEffect(() => {
-    const checkedUsername = USER_REGEX.test(username);
+    const { value, error } = schema.extract('username').validate(username);
     console.log(username);
-    console.log(checkedUsername);
-    setValidUsername(checkedUsername);
+    console.log(value);
+    setValidUsername(!error);
   }, [username]);
 
   useEffect(() => {
-    const checkedEmail = EMAIL_REGEX.test(email);
+    const { value, error } = schema.extract("email").validate(email);
     console.log(email);
-    console.log(checkedEmail);
-    setValidEmail(checkedEmail);
+    console.log(value);
+    setValidEmail(!error);
   }, [email]);
 
   useEffect(() => {
-    const checkedPassword = PWD_REGEX.test(password);
+    const { value, error } = schema.extract("password").validate(password);
     console.log(password);
-    console.log(checkedPassword);
-    setValidPassword(checkedPassword);
+    console.log(value);
+    setValidPassword(!error);
     const match = password === matchPassword;
     console.log(match);
     setValidMatch(match);
@@ -89,16 +105,12 @@ export default function UserForm({ isRegister }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     console.log("submit");
-    
-
-    
-
     switch (isRegister) {
       case true:
         {
-        const isValidUsername = USER_REGEX.test(username);
-        const isValidEmail = EMAIL_REGEX.test(email);
-        const isValidPassword = PWD_REGEX.test(password);
+        const isValidUsername = schema.extract("username").validate(username);
+        const isValidEmail = schema.extract("email").validate(email);
+        const isValidPassword = schema.extract("password").validate(password);
         if (!isValidUsername || !isValidEmail || !isValidPassword) {
           setErrMsg("Invalid Entry");
           return;
@@ -141,8 +153,8 @@ export default function UserForm({ isRegister }) {
 
       case false:
         {
-          const isValidEmail = EMAIL_REGEX.test(email);
-          const isValidPassword = PWD_REGEX.test(password);
+          const isValidEmail = schema.extract("email").validate(email);
+          const isValidPassword = schema.extract("password").validate(password);
           if (!isValidEmail || !isValidPassword) {
             setErrMsg("Invalid Entry");
             return;
@@ -160,21 +172,21 @@ export default function UserForm({ isRegister }) {
           },
           body: JSON.stringify(userData)
         })
-        const data = await response.json();
-        console.log(data);
         if (response.ok) {
+          const data = await response.json();
+          console.log(data);
           setSuccess(true);
           console.log("User logged in successfully");
-          localStorage.setItem("token", data.token);
-          localStorage.setItem("user", JSON.stringify({
-            email: data.email,
-            username: data.username,
-            id: data.id
-          }));
-          navigate("/home");
+          setAuth({ token: data.accessToken, user: {
+            id: data.user.id,
+            username: data.user.username,
+            email: data.user.email
+          }});
+          console.log(auth);
+          navigate("/feeds");
         }
         else {
-          setErrMsg(data.message);
+          // setErrMsg(data.message);
           console.log("User login failed");
         }
         setPassword("");
@@ -191,22 +203,29 @@ export default function UserForm({ isRegister }) {
   };
 
   return (
-    <div className="flex flex-col justify-center items-center gap-5">
-      <p
-        ref={errRef}
-        className={errMsg ? "errmsg" : "offscreen"}
-        aria-live="assertive"
-      >
-        {errMsg}
-      </p>
+    <div className="flex flex-col justify-center items-center gap-6 p-4 shadow-xl">
+      <h2 className="text-2xl font-bold">{isRegister ? "Sign Up" : "Sign In"}</h2>
+  
+      {errMsg && (
+        <p
+          ref={errRef}
+          className="alert alert-error text-sm text-red-700 font-semibold"
+          aria-live="assertive"
+        >
+          {errMsg}
+        </p>
+      )}
+  
       <form
         onSubmit={handleSubmit}
-        className="flex flex-col justify-center items-center"
+        className="flex flex-col justify-center items-center gap-4 w-64"
       >
         {/* username */}
         {isRegister && (
-          <div className="flex flex-col">
-            <label htmlFor="username">Username:</label>
+          <div className="form-control w-full">
+            <label htmlFor="username" className="label">
+              <span className="label-text">Username:</span>
+            </label>
             <input
               type="text"
               id="username"
@@ -214,182 +233,147 @@ export default function UserForm({ isRegister }) {
               value={username}
               autoComplete="off"
               onChange={onUsernameChange}
-              aria-invalid={validUsername ? "false" : "true"}
+              aria-invalid={!validUsername}
               aria-describedby="uidnote"
               onFocus={() => setUsernameFocus(true)}
               onBlur={() => setUsernameFocus(false)}
               required
-            ></input>
-
+              className="input input-sm input-bordered w-full"
+            />
             <p
               id="uidnote"
-              className={
-                usernameFocus && username && !validUsername
-                  ? "instructions"
-                  : "offscreen"
-              }
+              className={`mt-1 text-xs p-2 rounded bg-black text-white ${
+                usernameFocus && username && !validUsername ? "" : "hidden"
+              }`}
             >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth={1.5}
-                stroke="currentColor"
-                className="size-6"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="m11.25 11.25.041-.02a.75.75 0 0 1 1.063.852l-.708 2.836a.75.75 0 0 0 1.063.853l.041-.021M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9-3.75h.008v.008H12V8.25Z"
-                />
-              </svg>
-              4 to 24 characters.
-              <br />
-              Must inlude upper and lower letters.
+              <span className="inline-flex items-center gap-1">
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none">
+                  <path
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="m11.25 11.25 .041-.02a.75.75 0 0 1 1.063.852l-.708 2.836a.75.75 0 0 0 1.063.853l.041-.021M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9-3.75h.008v.008H12V8.25Z"
+                  />
+                </svg>
+                4 to 24 characters. Must include upper and lower case letters.
+              </span>
             </p>
           </div>
         )}
-
+  
         {/* email */}
-        <div className="flex flex-col">
-          <label htmlFor="email">Email:</label>
+        <div className="form-control w-full">
+          <label htmlFor="email" className="label">
+            <span className="label-text">Email:</span>
+          </label>
           <input
             type="email"
             id="email"
             value={email}
             autoComplete="off"
             onChange={onEmailChange}
-            aria-invalid={validEmail ? "false" : "true"}
+            aria-invalid={!validEmail}
             aria-describedby="emailnote"
             onFocus={() => setEmailFocus(true)}
             onBlur={() => setEmailFocus(false)}
             required
-          ></input>
-
-          <p
-            id="emailnote"
-            className={
-              emailFocus && email && !validEmail ? "instructions" : "offscreen"
-            }
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth={1.5}
-              stroke="currentColor"
-
-              className="size-6"
+            className="input input-sm input-bordered w-full"
+          />
+          {isRegister && (
+            <p
+              id="emailnote"
+              className={`mt-1 text-xs p-2 rounded bg-black text-white ${
+                emailFocus && email && !validEmail ? "" : "hidden"
+              }`}
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="m11.25 11.25.041-.02a.75.75 0 0 1 1.063.852l-.708 2.836a.75.75 0 0 0 1.063.853l.041-.021M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9-3.75h.008v.008H12V8.25Z"
-              />
-            </svg>
-            Must be a valid email address.
-          </p>
+              Must be a valid email address.
+            </p>
+          )}
         </div>
-
+  
         {/* password */}
-        <div className="flex flex-col">
-          <label htmlFor="password">Password:</label>
+        <div className="form-control w-full">
+          <label htmlFor="password" className="label">
+            <span className="label-text">Password:</span>
+          </label>
           <input
-            type="text"
+            type="password"
             id="password"
             value={password}
-            aria-invalid={validPassword ? "false" : "true"}
+            aria-invalid={!validPassword}
             aria-describedby="pwdnote"
             onChange={onPasswordChange}
             onFocus={() => setPasswordFocus(true)}
             onBlur={() => setPasswordFocus(false)}
             required
-          ></input>
-
-          <p
-            id="pwdnote"
-            className={
-              passwordFocus && !validPassword ? "instructions" : "offscreen"
-            }
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth={1.5}
-              stroke="currentColor"
-
-              className="size-6"
+            className="input input-sm input-bordered w-full"
+          />
+          {isRegister && (
+            <p
+              id="pwdnote"
+              className={`mt-1 text-xs p-2 rounded bg-black text-white ${
+                passwordFocus && !validPassword ? "" : "hidden"
+              }`}
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="m11.25 11.25.041-.02a.75.75 0 0 1 1.063.852l-.708 2.836a.75.75 0 0 0 1.063.853l.041-.021M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9-3.75h.008v.008H12V8.25Z"
-              />
-            </svg>
-            Must inlude upper and lower letters.
-            <br />
-            specail characters allowed: !@#$%
-          </p>
+              Must include upper and lower case letters.
+              <br />
+              Special characters allowed: <code>!@#$%</code>
+            </p>
+          )}
         </div>
-
+  
         {/* match password */}
         {isRegister && (
-          <div className="flex flex-col">
-            <label htmlFor="match-password">Password Match:</label>
+          <div className="form-control w-full">
+            <label htmlFor="match-password" className="label">
+              <span className="label-text">Confirm Password:</span>
+            </label>
             <input
-              type="text"
+              type="password"
               id="match-password"
               value={matchPassword}
-              aria-invalid={validMatch ? "false" : "true"}
+              aria-invalid={!validMatch}
               aria-describedby="matchnote"
               onChange={onMatchPasswordChange}
               onFocus={() => setMatchFocus(true)}
               onBlur={() => setMatchFocus(false)}
               required
-            ></input>
-
+              className="input input-sm input-bordered w-full"
+            />
             <p
               id="matchnote"
-              className={
-                !validMatch ? "instructions" : "offscreen"
-              }
+              className={`mt-1 text-xs p-2 rounded bg-black text-white ${
+                !validMatch ? "" : "hidden"
+              }`}
             >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth={1.5}
-                stroke="currentColor"
-                className="size-6"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="m11.25 11.25.041-.02a.75.75 0 0 1 1.063.852l-.708 2.836a.75.75 0 0 0 1.063.853l.041-.021M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9-3.75h.008v.008H12V8.25Z"
-                />
-              </svg>
               Must match password.
             </p>
           </div>
         )}
-
+  
         <button
           type="submit"
-          className="btn btn-primary cursor-pointer"
+          className="btn btn-primary"
           disabled={
             isRegister
               ? !validUsername || !validEmail || !validPassword || !validMatch
-              : !validEmail || !validPassword
+              : false
           }
-        >{isRegister ? "Sign Up" : "Sign In"}</button>
+        >
+          {isRegister ? "Sign Up" : "Sign In"}
+        </button>
       </form>
-      <p>
-        Already registered ?
+  
+      <p className="text-sm text-center">
+        {isRegister ? "Already registered?" : "Not registered yet?"}
         <br />
-        <span className="line">
-          <NavLink to="/signin">Sign In</NavLink>
-        </span>
+        <NavLink
+          to={isRegister ? "/signin" : "/register"}
+          className="text-blue-600 underline"
+        >
+          {isRegister ? "Sign In" : "Sign Up"}
+        </NavLink>
       </p>
     </div>
   );
