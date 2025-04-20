@@ -1,0 +1,17 @@
+{
+  "name": "echowords",
+  "version": "1.0.0",
+  "description": "echowords backend",
+  "license": "ISC",
+  "author": "Abdelrahman Salah",
+  "type": "commonjs",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "json-server-auth -w db.json"
+  },
+  "dependencies": {
+    "json-server": "^0.17.4",
+    "json-server-auth": "^2.1.0"
+  }
+}

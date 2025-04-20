@@ -1,0 +1,70 @@
+{
+  "users": [
+    {
+      "email": "abdelrahman@gmail.com",
+      "password": "$2a$10$qIYskuS1nQGJiRg303JUOOzDtpYTBTTwUeFfd258GiKkEINeMPeAm",
+      "username": "abdelrahman",
+      "id": 1
+    },
+    {
+      "email": "abdelrahman2@gmail.com",
+      "password": "$2a$10$78l..3mt95/GoLfTbJhWSucNHXiC3bT5KVs55vKTaNUy7Nnfen5ei",
+      "username": "abdelrahman2",
+      "id": 2
+    },
+    {
+      "email": "Abdelrahman@gmail.com",
+      "password": "$2a$10$3fqjtHAw9revVtVO2uub0ebj8ki9.Z0RLKNaqONlcqr9yemAV3mx.",
+      "username": "abdelrahman3",
+      "id": 3
+    }
+  ],
+  "posts": [
+    {
+      "id": 1,
+      "title": "Post 1",
+      "body": "This is the content of post 1",
+      "image": "https://img.daisyui.com/images/stock/photo-1606107557195-0e29a4b5b4aa.webp",
+      "userId": 1
+    },
+    {
+      "id": 2,
+      "title": "Post 2",
+      "body": "This is the content of post 2",
+      "image": "https://img.daisyui.com/images/stock/photo-1606107557195-0e29a4b5b4aa.webp",
+      "userId": 2
+    },
+    {
+      "id": 3,
+      "title": "Post 3",
+      "body": "This is the content of post 3",
+      "image": "",
+      "userId": 3
+    },
+    {
+      "id": 4,
+      "title": "Post 4",
+      "body": "This is the content of post 4",
+      "image": "https://img.daisyui.com/images/stock/photo-1606107557195-0e29a4b5b4aa.webp",
+      "userId": 1
+    },
+    {
+      "title": "",
+      "body": "",
+      "image": "",
+      "id": 5
+    },
+    {
+      "title": "",
+      "body": "",
+      "image": "",
+      "id": 6
+    },
+    {
+      "title": "",
+      "body": "",
+      "image": null,
+      "id": 7
+    }
+  ]
+}
