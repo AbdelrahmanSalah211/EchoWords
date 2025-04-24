@@ -16,7 +16,7 @@ export default function Nav() {
 
   const handleLogout = () => {
     setAuth({});
-    navigate("/signin", { replace: true });
+    navigate("/home/signin", { replace: true });
   }
 
   return (
@@ -33,7 +33,11 @@ export default function Nav() {
         />
 
         </div>
-        <div className="dropdown dropdown-end">
+        {!auth.user && <div>
+          <a className='btn btn-ghost' href="/home/register">register</a>
+          <a className='btn btn-ghost' href="/home/signin">sign in</a>
+        </div>}
+        {auth.user && <div className="dropdown dropdown-end">
           <div
             tabIndex={0}
             role="button"
@@ -61,7 +65,7 @@ export default function Nav() {
               </button>
             </li>
           </ul>
-        </div>
+        </div>}
       </div>
     </div>
   );
