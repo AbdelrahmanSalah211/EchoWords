@@ -134,7 +134,8 @@ export default function UserForm({ isRegister }) {
         if (response.ok) {
           setSuccess(true);
           console.log("User registered successfully");
-          navigate("/signin");
+          // navigate("/signin");
+          navigate("/home/signin");
         }
         else {
           setErrMsg(data.message);
@@ -183,7 +184,8 @@ export default function UserForm({ isRegister }) {
             email: data.user.email
           }});
           console.log(auth);
-          navigate("/feeds");
+          // navigate("/feeds");
+          navigate("/");
         }
         else {
           // setErrMsg(data.message);
@@ -369,7 +371,7 @@ export default function UserForm({ isRegister }) {
         {isRegister ? "Already registered?" : "Not registered yet?"}
         <br />
         <NavLink
-          to={isRegister ? "/signin" : "/register"}
+          to={isRegister ? "/home/signin" : "/home/register"}
           className="text-blue-600 underline"
         >
           {isRegister ? "Sign In" : "Sign Up"}
