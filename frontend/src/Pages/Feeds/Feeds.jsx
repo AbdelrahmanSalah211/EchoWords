@@ -1,6 +1,7 @@
 import React from 'react'
 import Post from '../../Components/Post/Post'
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useContext } from 'react'
+import AuthContext from "../../Context/AuthProvider";
 
 
 
@@ -10,62 +11,170 @@ export default function Feeds() {
   const addModalRef = useRef();
   const editModalRef = useRef();
 
+  const { auth } = useContext(AuthContext);
+  const loggedUserId = auth.user ? auth.user.id : null;
 
   const [posts, setPosts] = useState([]);
 
   const [addPostForm, setAddPostForm] = useState({
     title: "",
     body: "",
-    image: "",
+    image: null,
+  });
+
+  const [editPostForm, setEditPostForm] = useState({
+    title: "",
+    body: "",
+    image: null,
   });
 
   useEffect(() => {
     (async () => {
-      const fetchedPosts = await fetch("http://localhost:3000/posts");
+      const fetchedPosts = await fetch("http://localhost:3000/posts?_expand=user");
       const posts = await fetchedPosts.json();
+      console.log(posts);
       setPosts(posts.reverse());
     })();
 
   }, []);
 
-  const titleOnChangeHandler = (e) => {
+  const titleAddOnChangeHandler = (e) => {
     setAddPostForm({ ...addPostForm, title: e.target.value });
   };
 
-  const bodyOnChangeHandler = (e) => {
+  const bodyAddOnChangeHandler = (e) => {
     setAddPostForm({ ...addPostForm, body: e.target.value });
   };
 
-  const imageOnChangeHandler = (e) => {
+  const imageAddOnChangeHandler = (e) => {
     console.log(e.target.files);
     console.log(e.target.files[0]);
-    // setAddPostForm({ ...addPostForm, image: e.target.files[0] });
+    setAddPostForm({ ...addPostForm, image: e.target.files[0] });
   };
+  
+  const API_KEY = "";
 
   const handleAddPost = async (e) => {
+    // console.log("handleAddPost triggered");
     e.preventDefault();
-    const postData = {
-      title: addPostForm.title,
-      body: addPostForm.body,
-      image: addPostForm.image,
-    }
+    e.stopPropagation();
     try {
-      const addPostResponse = await fetch("http://localhost:3000/posts", {
+      const formData = new FormData();
+      formData.append("key", API_KEY);
+      formData.append("image", addPostForm.image);
+      console.log(formData.get("image"));
+
+      const imgResponse = await fetch(`https://api.imgbb.com/1/upload`, {
         method: "POST",
-        headers: {
-          "Content-type": "application/json",
-        },
-        body: JSON.stringify(postData),
+        
+        body: formData,
       })
-      const newPost = await addPostResponse.json();
-      const newPosts = [newPost, ...posts ];
-      setPosts(newPosts);
-      setAddPostForm({ title: "", body: "", image: null });
-      addModalRef.current.close();
+      let imgData;
+      try {
+        imgData = await imgResponse.json();
+        
+      } catch (error) {
+        console.error("Error parsing image upload response:", error);
+        return;
+      }
+      console.log(imgData);
+      if (imgData.status !== 200) {
+        console.error("Image upload failed:", imgData.message);
+        return;
+      }
+      const imageUrl = imgData.data.display_url;
+      console.log(imageUrl);
+      const postData = {
+        title: addPostForm.title,
+        body: addPostForm.body,
+        image: imageUrl,
+        userId: loggedUserId
+      }
+      if(addPostForm.title && addPostForm.body) {
+        const addPostResponse = await fetch("http://localhost:3000/posts", {
+          method: "POST",
+          headers: {
+            "Content-type": "application/json",
+            "Authorization": `Bearer ${auth.accessToken}`
+          },
+          body: JSON.stringify(postData),
+        })
+        const newPost = await addPostResponse.json();
+        const newPosts = [newPost, ...posts ];
+        setPosts(newPosts);
+        setAddPostForm({ title: "", body: "", image: null });
+        addModalRef.current.close();
+      }
     } catch (error) {
       console.error("Error adding post:", error);
     }
     
+  }
+
+  const titleEditOnChangeHandler = (e) => {
+    setEditPostForm({ ...editPostForm, title: e.target.value });
+  };
+
+  const bodyEditOnChangeHandler = (e) => {
+    setEditPostForm({ ...editPostForm, body: e.target.value });
+  };
+
+  const imageEditOnChangeHandler = (e) => {
+    console.log(e.target.files);
+    console.log(e.target.files[0]);
+    setEditPostForm({ ...editPostForm, image: e.target.files[0] });
+  };
+
+  const handleEditPost = async (e) => {
+    e.preventDefault();
+    const postId = editModalRef.current.getAttribute("data-id");
+    const editData = {
+      id: postId,
+      title: editPostForm.title,
+      body: editPostForm.body,
+      image: editPostForm.image,
+      userId: loggedUserId
+    }
+    try {
+      if(editPostForm.title && editPostForm.body) {
+        const editPostResponse = await fetch(`http://localhost:3000/posts/${postId}`, {
+          method: "PUT",
+          headers: {
+            "Content-type": "application/json",
+            "Authorization": `Bearer ${auth.accessToken}`
+          },
+          body: JSON.stringify(editData),
+        })
+        const newPost = await editPostResponse.json();
+        const newPosts = posts.map((post) => {
+          if(post.id == postId){
+            return newPost;
+          } else {
+            return post;
+          }
+        });
+        setPosts(newPosts);
+        setEditPostForm({ title: "", body: "", image: null });
+        editModalRef.current.close();
+      }
+    } catch (error) {
+      console.error("Error adding post:", error);
+    }
+    
+  }
+
+  const handleDeletePost = async (id) => {
+    // preserve space for code
+    const deletePostResponse = await fetch(`http://localhost:3000/posts/${id}`, {
+      method: "Delete",
+      headers: {
+        "Content-type": "application/json",
+        "Authorization": `Bearer ${auth.accessToken}`
+      },
+    });
+    const newPosts = posts.filter((post) => post.id !== id);
+    setPosts(newPosts);
+    console.log("Post deleted successfully");
   }
 
   return (
@@ -76,14 +185,18 @@ export default function Feeds() {
             key={post.id}
             id={post.id}
             userId={post.userId}
+            username={post.user.username}
             title={post.title}
             body={post.body}
             image={post.image}
             editModalRef={editModalRef}
+            editPostForm={editPostForm}
+            setEditPostForm={setEditPostForm}
+            handleDeletePost={handleDeletePost}
           />
         ))}
       </div>
-      <div>
+      {auth.user && <div>
         <svg
           xmlns="http://www.w3.org/2000/svg"
           fill="none"
@@ -99,7 +212,7 @@ export default function Feeds() {
             d="M12 9v6m3-3H9m12 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
           />
         </svg>
-      </div>
+      </div>}
 
 
       {/* modal for adding posts */}
@@ -107,32 +220,36 @@ export default function Feeds() {
       <dialog ref={addModalRef} className="modal">
         <div className="modal-box">
           <h3 className="text-center">Add Post</h3>
-          <form method="dialog" className="flex flex-col justify-start gap-2" onSubmit={handleAddPost}>
+          <form className="flex flex-col justify-start gap-2" onSubmit={handleAddPost}>
             <input
               type="text"
               placeholder="Title"
               className="input input-primary w-1/3"
-              onChange={titleOnChangeHandler}
+              onChange={titleAddOnChangeHandler}
               value={addPostForm.title}
             />
             <textarea
               type="text"
               placeholder="Body"
               className="textarea textarea-primary w-full"
-              onChange={bodyOnChangeHandler}
+              onChange={bodyAddOnChangeHandler}
               value={addPostForm.body}
             ></textarea>
             <input
               type="file"
               accept="image/*"
               className="file-input file-input-sm file-input-ghost file-input-primary"
-              onChange={imageOnChangeHandler}
-              value={addPostForm.image}
+              onChange={imageAddOnChangeHandler}
+              // value={addPostForm.image}
             />
             <div className="flex justify-between">
               <button
+                type='button'
                 className="btn w-24 btn-soft self-center"
-                onClick={() => addModalRef.current.close()}
+                onClick={() => {
+                  addModalRef.current.close();
+                  setAddPostForm({ title: "", body: "", image: null });
+                }}
               >
                 Cancel
               </button>
@@ -154,31 +271,33 @@ export default function Feeds() {
       {/* modal for editing posts */}
       <dialog ref={editModalRef} className="modal">
         <div className="modal-box">
-          <h3 className="text-center">Add Post</h3>
-          <form method="dialog" className="flex flex-col justify-start gap-2" onSubmit={handleAddPost}>
+          <h3 className="text-center">Edit Post</h3>
+          <form className="flex flex-col justify-start gap-2" onSubmit={handleEditPost}>
             <input
               type="text"
               placeholder="Title"
               className="input input-primary w-1/3"
-              onChange={titleOnChangeHandler}
-              value={addPostForm.title}
+              onChange={titleEditOnChangeHandler}
+              value={editPostForm.title}
             />
             <textarea
               type="text"
               placeholder="Body"
               className="textarea textarea-primary w-full"
-              onChange={bodyOnChangeHandler}
-              value={addPostForm.body}
+              onChange={bodyEditOnChangeHandler}
+              value={editPostForm.body}
             ></textarea>
             <input
               type="file"
               accept="image/*"
+              name='image'
               className="file-input file-input-sm file-input-ghost file-input-primary"
-              onChange={imageOnChangeHandler}
-              value={addPostForm.image}
+              onChange={imageEditOnChangeHandler}
+              // value={editPostForm.image}
             />
             <div className="flex justify-between">
               <button
+                type='button'
                 className="btn w-24 btn-soft self-center"
                 onClick={() => editModalRef.current.close()}
               >
@@ -188,7 +307,7 @@ export default function Feeds() {
                 type="submit"
                 className="btn w-24 btn-primary self-center"
               >
-                Add
+                Edit
               </button>
             </div>
           </form>
