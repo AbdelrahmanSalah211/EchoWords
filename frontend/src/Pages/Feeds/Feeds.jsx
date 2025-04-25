@@ -47,50 +47,31 @@ export default function Feeds() {
   };
 
   const imageAddOnChangeHandler = (e) => {
-    console.log(e.target.files);
-    console.log(e.target.files[0]);
     setAddPostForm({ ...addPostForm, image: e.target.files[0] });
   };
   
   const API_KEY = "";
 
   const handleAddPost = async (e) => {
-    // console.log("handleAddPost triggered");
     e.preventDefault();
-    e.stopPropagation();
+    addModalRef.current.close();
     try {
       const formData = new FormData();
       formData.append("key", API_KEY);
       formData.append("image", addPostForm.image);
-      console.log(formData.get("image"));
-
-      const imgResponse = await fetch(`https://api.imgbb.com/1/upload`, {
+      const imgResponse = await fetch(`https://api.imgbb.com/1/upload?`, {
         method: "POST",
-        
-        body: formData,
+        body: formData
       })
-      let imgData;
-      try {
-        imgData = await imgResponse.json();
-        
-      } catch (error) {
-        console.error("Error parsing image upload response:", error);
-        return;
-      }
-      console.log(imgData);
-      if (imgData.status !== 200) {
-        console.error("Image upload failed:", imgData.message);
-        return;
-      }
-      const imageUrl = imgData.data.display_url;
-      console.log(imageUrl);
+      let imgData = await imgResponse.json()
+      const imgUrl = imgData.data.display_url;
       const postData = {
         title: addPostForm.title,
         body: addPostForm.body,
-        image: imageUrl,
+        image: imgUrl,
         userId: loggedUserId
       }
-      if(addPostForm.title && addPostForm.body) {
+      if(addPostForm.title && addPostForm.body){
         const addPostResponse = await fetch("http://localhost:3000/posts", {
           method: "POST",
           headers: {
@@ -100,15 +81,14 @@ export default function Feeds() {
           body: JSON.stringify(postData),
         })
         const newPost = await addPostResponse.json();
+        newPost.user = auth.user;
         const newPosts = [newPost, ...posts ];
         setPosts(newPosts);
         setAddPostForm({ title: "", body: "", image: null });
-        addModalRef.current.close();
       }
     } catch (error) {
       console.error("Error adding post:", error);
     }
-    
   }
 
   const titleEditOnChangeHandler = (e) => {
@@ -120,8 +100,6 @@ export default function Feeds() {
   };
 
   const imageEditOnChangeHandler = (e) => {
-    console.log(e.target.files);
-    console.log(e.target.files[0]);
     setEditPostForm({ ...editPostForm, image: e.target.files[0] });
   };
 
@@ -133,12 +111,11 @@ export default function Feeds() {
       title: editPostForm.title,
       body: editPostForm.body,
       image: editPostForm.image,
-      userId: loggedUserId
     }
     try {
       if(editPostForm.title && editPostForm.body) {
         const editPostResponse = await fetch(`http://localhost:3000/posts/${postId}`, {
-          method: "PUT",
+          method: "PATCH",
           headers: {
             "Content-type": "application/json",
             "Authorization": `Bearer ${auth.accessToken}`
@@ -146,6 +123,7 @@ export default function Feeds() {
           body: JSON.stringify(editData),
         })
         const newPost = await editPostResponse.json();
+        newPost.user = auth.user;
         const newPosts = posts.map((post) => {
           if(post.id == postId){
             return newPost;
@@ -164,7 +142,6 @@ export default function Feeds() {
   }
 
   const handleDeletePost = async (id) => {
-    // preserve space for code
     const deletePostResponse = await fetch(`http://localhost:3000/posts/${id}`, {
       method: "Delete",
       headers: {
@@ -203,7 +180,7 @@ export default function Feeds() {
           viewBox="0 0 24 24"
           strokeWidth={1.5}
           stroke="currentColor"
-          className="size-6"
+          className="size-6 w-12 h-12 fixed bottom-10 right-10"
           onClick={() => addModalRef.current.showModal()}
         >
           <path
