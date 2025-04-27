@@ -2,6 +2,7 @@ import React from 'react'
 import Post from '../../Components/Post/Post'
 import { useState, useEffect, useRef, useContext } from 'react'
 import AuthContext from "../../Context/AuthProvider";
+import InfiniteScroll from 'react-infinite-scroll-component';
 
 
 
@@ -13,8 +14,6 @@ export default function Feeds() {
 
   const { auth } = useContext(AuthContext);
   const loggedUserId = auth.user ? auth.user.id : null;
-
-  const [posts, setPosts] = useState([]);
 
   const [addPostForm, setAddPostForm] = useState({
     title: "",
@@ -28,14 +27,32 @@ export default function Feeds() {
     image: null,
   });
 
-  useEffect(() => {
-    (async () => {
-      const fetchedPosts = await fetch("http://localhost:3000/posts?_expand=user");
-      const posts = await fetchedPosts.json();
-      console.log(posts);
-      setPosts(posts.reverse());
-    })();
+  const [posts, setPosts] = useState([]);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
 
+  const fetchPosts = async () => {
+    try {
+      const fetchedPosts = await fetch(`http://localhost:3000/posts?_page=${page}&_limit=10&_sort=id&_order=desc&_expand=user`);
+      const posts = await fetchedPosts.json();
+      setPosts((prevPosts) => {
+        const existingPostIds = new Set(prevPosts.map(post => post.id));
+        const filteredNewPosts = posts.filter(post => !existingPostIds.has(post.id));
+        return [...prevPosts, ...filteredNewPosts];
+      });
+      
+      if(posts.length === 0){
+        setHasMore(false);
+      } else {
+        setPage((prevPage) => prevPage + 1);
+      }
+    } catch (error) {
+      console.error("Error fetching posts:", error);
+    }
+  }
+
+  useEffect(() => {
+    fetchPosts();
   }, []);
 
   const titleAddOnChangeHandler = (e) => {
@@ -157,21 +174,33 @@ export default function Feeds() {
   return (
     <div className="flex flex-col items-center justify-center w-3/5">
       <div>
-        {posts.map((post) => (
-          <Post
-            key={post.id}
-            id={post.id}
-            userId={post.userId}
-            username={post.user.username}
-            title={post.title}
-            body={post.body}
-            image={post.image}
-            editModalRef={editModalRef}
-            editPostForm={editPostForm}
-            setEditPostForm={setEditPostForm}
-            handleDeletePost={handleDeletePost}
-          />
-        ))}
+        <InfiniteScroll
+          dataLength={posts.length}
+          next={fetchPosts}
+          hasMore={hasMore}
+          loader={<h4 className='text-center'>Loading...</h4>}
+          endMessage={
+            <p className="text-center">
+              <b>Yay! You have seen it all</b>
+            </p>
+          }
+        >
+          {posts.map((post) => (
+            <Post
+              key={`post-${post.id}-${post.userId}`}
+              id={post.id}
+              title={post.title}
+              body={post.body}
+              image={post.image}
+              userId={post.userId}
+              username={post.user.username}
+              editModalRef={editModalRef}
+              editPostForm={editPostForm}
+              setEditPostForm={setEditPostForm}
+              handleDeletePost={handleDeletePost}
+            />
+          ))}
+        </InfiniteScroll>
       </div>
       {auth.user && <div>
         <svg
