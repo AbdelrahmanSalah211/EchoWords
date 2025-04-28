@@ -6,7 +6,7 @@ export default function Layout() {
   return (
     <div>
       <Nav />
-      <main className="flex items-center justify-center min-h-screen">
+      <main className="">
         <Outlet />
       </main>
     </div>
