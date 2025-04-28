@@ -67,21 +67,24 @@ export default function Feeds() {
     setAddPostForm({ ...addPostForm, image: e.target.files[0] });
   };
   
-  const API_KEY = "";
+  const API_KEY = import.meta.env.VITE_API_KEY;
 
   const handleAddPost = async (e) => {
     e.preventDefault();
     addModalRef.current.close();
     try {
-      const formData = new FormData();
-      formData.append("key", API_KEY);
-      formData.append("image", addPostForm.image);
-      const imgResponse = await fetch(`https://api.imgbb.com/1/upload?`, {
-        method: "POST",
-        body: formData
-      })
-      let imgData = await imgResponse.json()
-      const imgUrl = imgData.data.display_url;
+      let imgData;
+      if(addPostForm.image){
+        const formData = new FormData();
+        formData.append("key", API_KEY);
+        formData.append("image", addPostForm.image);
+        const imgResponse = await fetch(`https://api.imgbb.com/1/upload?`, {
+          method: "POST",
+          body: formData
+        })
+        imgData = await imgResponse.json()
+      }
+      const imgUrl = addPostForm.image ? imgData.data.display_url : "";
       const postData = {
         title: addPostForm.title,
         body: addPostForm.body,
@@ -122,14 +125,27 @@ export default function Feeds() {
 
   const handleEditPost = async (e) => {
     e.preventDefault();
-    const postId = editModalRef.current.getAttribute("data-id");
-    const editData = {
-      id: postId,
-      title: editPostForm.title,
-      body: editPostForm.body,
-      image: editPostForm.image,
-    }
     try {
+      let imgData;
+      if(editPostForm.image){
+        const formData = new FormData();
+        formData.append("key", API_KEY);
+        formData.append("image", editPostForm.image);
+        const imgResponse = await fetch(`https://api.imgbb.com/1/upload?`, {
+          method: "POST",
+          body: formData
+        })
+        imgData = await imgResponse.json()
+      }
+      const postId = editModalRef.current.getAttribute("data-id");
+      const imgUrl = editPostForm.image ? imgData.data.display_url : "";
+
+      const editData = {
+        id: postId,
+        title: editPostForm.title,
+        body: editPostForm.body,
+        image: imgUrl,
+      }
       if(editPostForm.title && editPostForm.body) {
         const editPostResponse = await fetch(`http://localhost:3000/posts/${postId}`, {
           method: "PATCH",
@@ -172,18 +188,25 @@ export default function Feeds() {
   }
 
   return (
-    <div className="flex flex-col items-center justify-center w-3/5">
-      <div>
+    <div className="px-20 md:px-40 xl:px-80 ">
         <InfiniteScroll
           dataLength={posts.length}
           next={fetchPosts}
           hasMore={hasMore}
-          loader={<h4 className='text-center'>Loading...</h4>}
-          endMessage={
-            <p className="text-center">
-              <b>Yay! You have seen it all</b>
-            </p>
+          loader={
+            <div className="flex justify-center items-center">
+              <span className="loading loading-spinner text-primary"></span>
+            </div>
           }
+          endMessage={
+            <div className="flex flex-col items-center justify-center py-16 space-y-4 animate-fadeIn">
+              <p className="text-gray-500">You've reached the end. Thanks for scrolling! 🚀</p>
+              <button className="btn btn-primary btn-sm animate-bounce" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
+                Back to Top
+              </button>
+            </div>
+          }
+          className='flex flex-col p-10 shadow-lg rounded'
         >
           {posts.map((post) => (
             <Post
@@ -201,8 +224,7 @@ export default function Feeds() {
             />
           ))}
         </InfiniteScroll>
-      </div>
-      {auth.user && <div>
+      {auth.user &&
         <svg
           xmlns="http://www.w3.org/2000/svg"
           fill="none"
@@ -218,7 +240,7 @@ export default function Feeds() {
             d="M12 9v6m3-3H9m12 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
           />
         </svg>
-      </div>}
+      }
 
 
       {/* modal for adding posts */}
