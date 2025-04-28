@@ -52,15 +52,17 @@ export default function Nav() {
           </div>
           <ul
             tabIndex={0}
-            className="menu menu-sm dropdown-content bg-base-100 rounded-box z-1 mt-3 w-52 p-2 shadow"
+            className="menu menu-sm dropdown-content bg-base-100 rounded-box z-1 mt-3 w-24 p-2 shadow"
           >
             <li>
-              <a className="justify-between">
+              <a className="text-base">
                 Profile
               </a>
             </li>
             <li>
-              <button onClick={handleLogout}>
+              <button
+                className='text-base'
+                onClick={handleLogout}>
                 Logout
               </button>
             </li>
