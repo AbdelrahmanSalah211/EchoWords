@@ -1,6 +1,6 @@
 import React from 'react'
 import AuthContext from "../../Context/AuthProvider";
-import { useContext } from "react";
+import { useContext, useRef, useEffect } from "react";
 
 
 export default function Post({
@@ -16,6 +16,21 @@ export default function Post({
 }) {
   const { auth } = useContext(AuthContext);
 
+  const dropdownRef = useRef(null);
+
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        dropdownRef.current.open = false;
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
   const loggedUserId = auth.user ? auth.user.id : null;
 
   const modalOpenHandler = () => {
@@ -29,13 +44,13 @@ export default function Post({
   }
 
   return (
-    <div className="card bg-base-100 w-96 shadow-sm">
-      <div className="card-body">
-        <div className="flex justify-between items-center">
+    <div className="border-b-2 border-gray-200 py-5">
+        <div className="flex justify-between items-center mb-2">
+          {/* self justify start title and body */}
           <h2 className="card-title">{title}</h2>
           {loggedUserId === userId && (
-            <details className="dropdown">
-              <summary className="btn m-1">
+            <details className="dropdown" ref={dropdownRef}>
+              <summary className="btn bg-transparent hover:bg-transparent border-none shadow-none">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   fill="none"
@@ -51,7 +66,7 @@ export default function Post({
                   />
                 </svg>
               </summary>
-              <ul className="menu dropdown-content bg-base-100 rounded-box z-1 w-52 p-2 shadow-sm">
+              <ul className="menu dropdown-content bg-base-100 rounded-box z-1 p-2 shadow-sm">
                 <li>
                   <button
                     className="justify-between"
@@ -74,10 +89,9 @@ export default function Post({
         </div>
         <p className="text-sm text-gray-500">Posted by {username}</p>
         <p>{body}</p>
-      </div>
       {image && (
         <figure>
-          <img src={image} alt="image" />
+          <img  className='w-[20vw]' src={image} alt="image" />
         </figure>
       )}
     </div>

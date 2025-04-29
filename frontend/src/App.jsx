@@ -13,18 +13,6 @@ function App() {
 
   return (
     <>
-      {/* <Routes>
-        <Route path="/" element={<Home />}>
-          <Route index  element={<UserForm isRegister={true} />} />
-          <Route path="/register"  element={<UserForm isRegister={true} />} />
-          <Route path="/signin" element={<UserForm isRegister={false} />} />
-        </Route>
-        <Route element={<Layout/>} >
-          <Route path="/feeds" element={<Feeds />} />
-        </Route>
-        <Route path='/*' element={<Error />}/>
-      </Routes> */}
-
       <Routes>
         <Route element={<Layout />}>
           <Route path="/" element={<Feeds />} />
