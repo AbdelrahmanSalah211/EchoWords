@@ -21,7 +21,8 @@ export default function UserForm({ isRegister }) {
         'string.pattern.base': `"Password" must contain at least 1 uppercase, 1 lowercase, 1 number, 1 special character and be at least 8 characters long.`,
       }),
   });
-  
+
+  const API_ENDPOINT = import.meta.env.VITE_API_ENDPOINT;
 
   const usernameRef = useRef();
   const errRef = useRef();
@@ -104,100 +105,80 @@ export default function UserForm({ isRegister }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("submit");
     switch (isRegister) {
       case true:
         {
-        const isValidUsername = schema.extract("username").validate(username);
-        const isValidEmail = schema.extract("email").validate(email);
-        const isValidPassword = schema.extract("password").validate(password);
-        if (!isValidUsername || !isValidEmail || !isValidPassword) {
-          setErrMsg("Invalid Entry");
-          return;
-        }
-        console.log("Valid Entry");
         const userData = {
           username: username,
           email: email,
           password: password
         };
-        
-        const response = await fetch('http://localhost:3000/users', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(userData)
-        })
-        const data = await response.json();
-        console.log(data);
-        if (response.ok) {
+        try {
+          const response = await fetch(`${API_ENDPOINT}/users/signup`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(userData)
+          })
+          const data = await response.json();
+          console.log(data);
+          if(response.status !== 201) {
+            throw new Error(data.message);
+          }
           setSuccess(true);
-          console.log("User registered successfully");
-          // navigate("/signin");
           navigate("/home/signin");
+          setUsername("");
+          setPassword("");
+          setEmail("");
+          setMatchPassword("");
+          setValidUsername(false);
+          setValidPassword(false);
+          setValidEmail(false);
+          setValidMatch(false);
+        } catch (error) {
+          setErrMsg(error.message);
+          console.log("User registration failed", error);
         }
-        else {
-          setErrMsg(data.message);
-          console.log("User registration failed");
-        }
-        setUsername("");
-        setPassword("");
-        setEmail("");
-        setMatchPassword("");
-        setValidUsername(false);
-        setValidPassword(false);
-        setValidEmail(false);
-        setValidMatch(false);
         break;
       }
 
       case false:
         {
-          const isValidEmail = schema.extract("email").validate(email);
-          const isValidPassword = schema.extract("password").validate(password);
-          if (!isValidEmail || !isValidPassword) {
-            setErrMsg("Invalid Entry");
-            return;
-          }
-        console.log("Valid Entry");
         const userData = {
           email: email,
           password: password
         };
-        
-        const response = await fetch('http://localhost:3000/login', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(userData)
-        })
-        if (response.ok) {
+        try {
+          const response = await fetch(`${API_ENDPOINT}/users/login`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(userData)
+          })
           const data = await response.json();
-          console.log(data);
+          if (response.status !== 200) {
+            throw new Error(data.message);
+          }
           setSuccess(true);
-          console.log("User logged in successfully");
           setAuth({ token: data.accessToken, user: {
             id: data.user.id,
             username: data.user.username,
             email: data.user.email
           }});
-          console.log(auth);
-          // navigate("/feeds");
           navigate("/");
+          setPassword("");
+          setEmail("");
+          setValidPassword(false);
+          setValidEmail(false);
+        } catch (error) {
+          setErrMsg(error.message);
+          console.log("User login failed", error);
         }
-        else {
-          // setErrMsg(data.message);
-          console.log("User login failed");
-        }
-        setPassword("");
-        setEmail("");
-        setValidPassword(false);
-        setValidEmail(false);
         break;
       }
-    
+
       default:
         console.log("default case");
         break;
@@ -323,7 +304,14 @@ export default function UserForm({ isRegister }) {
               Special characters allowed: <code>!@#$%</code>
             </p>
           )}
+        {!isRegister && <NavLink
+          to="/forgetpassword"
+          className="text-blue-600 underline"
+        >
+          Forgert Password
+        </NavLink>}
         </div>
+
   
         {/* match password */}
         {isRegister && (
