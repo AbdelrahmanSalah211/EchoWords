@@ -31,13 +31,18 @@ export default function Feeds() {
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
 
+  const API_ENDPOINT = import.meta.env.VITE_API_ENDPOINT;
+
   const fetchPosts = async () => {
     try {
-      const fetchedPosts = await fetch(`http://localhost:3000/posts?_page=${page}&_limit=10&_sort=id&_order=desc&_expand=user`);
-      const posts = await fetchedPosts.json();
+      const response = await fetch(`${API_ENDPOINT}/posts?page=${page}&limit=10&sort=-createdAt`);
+      const responseData = await response.json();
+      const { posts } = responseData.data;
+      console.log(responseData);
+      console.log(posts);
       setPosts((prevPosts) => {
-        const existingPostIds = new Set(prevPosts.map(post => post.id));
-        const filteredNewPosts = posts.filter(post => !existingPostIds.has(post.id));
+        const existingPostIds = new Set(prevPosts.map(post => post._id));
+        const filteredNewPosts = posts.filter(post => !existingPostIds.has(post._id));
         return [...prevPosts, ...filteredNewPosts];
       });
       
@@ -210,12 +215,12 @@ export default function Feeds() {
         >
           {posts.map((post) => (
             <Post
-              key={`post-${post.id}-${post.userId}`}
+              key={post._id}
               id={post.id}
               title={post.title}
               body={post.body}
               image={post.image}
-              userId={post.userId}
+              userId={post.user._id}
               username={post.user.username}
               editModalRef={editModalRef}
               editPostForm={editPostForm}
