@@ -6,6 +6,7 @@ import Home from './Pages/Home/Home'
 import Post from './Components/Post/Post'
 import Feeds from "./Pages/Feeds/Feeds";
 import Layout from './Components/Layout/Layout'
+import Profile from './Pages/Profile/Profile'
 
 function App() {
 
@@ -16,6 +17,7 @@ function App() {
       <Routes>
         <Route element={<Layout />}>
           <Route path="/" element={<Feeds />} />
+          <Route path="/home/profile" element={<Profile />} />
         </Route>
         <Route path="/home" element={<Home />} >
           <Route path="/home/register"  element={<UserForm isRegister={true} />} />

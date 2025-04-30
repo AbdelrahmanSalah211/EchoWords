@@ -165,7 +165,8 @@ export default function UserForm({ isRegister }) {
           setAuth({ token: data.accessToken, user: {
             id: data.user.id,
             username: data.user.username,
-            email: data.user.email
+            email: data.user.email,
+            photo: data.user.photo,
           }});
           navigate("/");
           setPassword("");

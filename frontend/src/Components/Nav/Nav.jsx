@@ -1,11 +1,10 @@
 import React from 'react'
-import { useNavigate } from "react-router";
+import { NavLink, useNavigate } from "react-router";
 import { useContext } from "react";
 import AuthContext from "../../Context/AuthProvider";
 
 export default function Nav() {
   const { auth, setAuth } = useContext(AuthContext);
-  console.log(auth);
   
   const navigate = useNavigate();
   
@@ -22,7 +21,7 @@ export default function Nav() {
   return (
     <div className="navbar bg-base-100 shadow-sm">
       <div className="flex-1">
-        <a className="btn btn-ghost text-xl">EchoWords</a>
+        <NavLink to="/" className="btn btn-ghost normal-case text-xl">EchoWords</NavLink>
       </div>
       <div className="flex flex-1 gap-2">
         <div className='flex-1'>
@@ -31,7 +30,6 @@ export default function Nav() {
           placeholder="Search"
           className="input input-bordered w-24 md:w-auto"
         />
-
         </div>
         {!auth.user && <div>
           <a className='btn btn-ghost' href="/home/register">register</a>
@@ -45,8 +43,8 @@ export default function Nav() {
           >
             <div className="w-10 rounded-full">
               <img
-                alt="Tailwind CSS Navbar component"
-                src="https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp"
+                alt="user avatar"
+                src={auth.user.photo}
               />
             </div>
           </div>
@@ -55,9 +53,9 @@ export default function Nav() {
             className="menu menu-sm dropdown-content bg-base-100 rounded-box z-1 mt-3 w-24 p-2 shadow"
           >
             <li>
-              <a className="text-base">
+              <NavLink to="/home/profile" className="text-base">
                 Profile
-              </a>
+              </NavLink>
             </li>
             <li>
               <button
