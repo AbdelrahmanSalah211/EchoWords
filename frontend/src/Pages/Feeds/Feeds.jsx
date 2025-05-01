@@ -93,21 +93,25 @@ export default function Feeds() {
       const postData = {
         title: addPostForm.title,
         body: addPostForm.body,
-        image: imgUrl,
-        userId: loggedUserId
+        image: imgUrl
       }
       if(addPostForm.title && addPostForm.body){
-        const addPostResponse = await fetch("http://localhost:3000/posts", {
+        const response = await fetch(`${API_ENDPOINT}/posts`, {
           method: "POST",
           headers: {
             "Content-type": "application/json",
-            "Authorization": `Bearer ${auth.accessToken}`
+            "Authorization": `Bearer ${auth.token}`
           },
           body: JSON.stringify(postData),
         })
-        const newPost = await addPostResponse.json();
-        newPost.user = auth.user;
-        const newPosts = [newPost, ...posts ];
+        const responseData = await response.json();
+        const { post } = responseData.data;
+        post.user = {
+          _id: auth.user.id,
+          username: auth.user.username,
+          email: auth.user.email
+        }
+        const newPosts = [post, ...posts ];
         setPosts(newPosts);
         setAddPostForm({ title: "", body: "", image: null });
       }
@@ -130,6 +134,7 @@ export default function Feeds() {
 
   const handleEditPost = async (e) => {
     e.preventDefault();
+    editModalRef.current.close();
     try {
       let imgData;
       if(editPostForm.image){
@@ -146,32 +151,35 @@ export default function Feeds() {
       const imgUrl = editPostForm.image ? imgData.data.display_url : "";
 
       const editData = {
-        id: postId,
         title: editPostForm.title,
         body: editPostForm.body,
         image: imgUrl,
       }
       if(editPostForm.title && editPostForm.body) {
-        const editPostResponse = await fetch(`http://localhost:3000/posts/${postId}`, {
+        const response = await fetch(`${API_ENDPOINT}/posts/${postId}`, {
           method: "PATCH",
           headers: {
             "Content-type": "application/json",
-            "Authorization": `Bearer ${auth.accessToken}`
+            "Authorization": `Bearer ${auth.token}`
           },
           body: JSON.stringify(editData),
         })
-        const newPost = await editPostResponse.json();
-        newPost.user = auth.user;
-        const newPosts = posts.map((post) => {
-          if(post.id == postId){
-            return newPost;
-          } else {
+        const responseData = await response.json();
+        const { post } = responseData.data;
+        post.user = {
+          _id: auth.user.id,
+          username: auth.user.username,
+          email: auth.user.email
+        }
+        const newPosts = posts.map((oldPost) => {
+          if(oldPost._id == postId){
             return post;
+          } else {
+            return oldPost;
           }
         });
         setPosts(newPosts);
         setEditPostForm({ title: "", body: "", image: null });
-        editModalRef.current.close();
       }
     } catch (error) {
       console.error("Error adding post:", error);
@@ -180,20 +188,20 @@ export default function Feeds() {
   }
 
   const handleDeletePost = async (id) => {
-    const deletePostResponse = await fetch(`http://localhost:3000/posts/${id}`, {
+    const response = await fetch(`${API_ENDPOINT}/posts/${id}`, {
       method: "Delete",
       headers: {
         "Content-type": "application/json",
-        "Authorization": `Bearer ${auth.accessToken}`
+        "Authorization": `Bearer ${auth.token}`
       },
     });
-    const newPosts = posts.filter((post) => post.id !== id);
+    const newPosts = posts.filter((post) => post._id !== id);
     setPosts(newPosts);
     console.log("Post deleted successfully");
   }
 
   return (
-    <div className="px-20 md:px-40 xl:px-80 ">
+    <div className="px-20 md:px-40 xl:px-80">
         <InfiniteScroll
           dataLength={posts.length}
           next={fetchPosts}
@@ -216,7 +224,7 @@ export default function Feeds() {
           {posts.map((post) => (
             <Post
               key={post._id}
-              id={post.id}
+              id={post._id}
               title={post.title}
               body={post.body}
               image={post.image}
