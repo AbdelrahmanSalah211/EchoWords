@@ -117,7 +117,6 @@ export default function Profile() {
   const API_ENDPOINT = import.meta.env.VITE_API_ENDPOINT;
   const API_KEY = import.meta.env.VITE_API_KEY;
 
-
   const handleEditProfile = async (e) => {
     e.preventDefault();
     try {
@@ -132,11 +131,12 @@ export default function Profile() {
         })
         photoData = await photoResponse.json()
       }
-      const photoUrl = user.photo ? photoData.data.display_url : "";
       const profileData = {
         username: user.username,
-        email: user.email,
-        photo: photoUrl
+        email: user.email
+      }
+      if(user.photo){
+        profileData.photo = photoData.data.display_url
       }
       const response = await fetch(`${API_ENDPOINT}/users`, {
         method: "PATCH",
