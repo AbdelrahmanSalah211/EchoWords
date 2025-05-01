@@ -155,6 +155,7 @@ export default function UserForm({ isRegister }) {
             headers: {
               'Content-Type': 'application/json'
             },
+            credentials: 'include',
             body: JSON.stringify(userData)
           })
           const data = await response.json();

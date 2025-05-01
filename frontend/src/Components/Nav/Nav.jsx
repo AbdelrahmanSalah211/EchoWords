@@ -5,17 +5,28 @@ import AuthContext from "../../Context/AuthProvider";
 
 export default function Nav() {
   const { auth, setAuth } = useContext(AuthContext);
-  
+
   const navigate = useNavigate();
-  
-    // if(!auth.user){
-    //   navigate("/signin", { replace: true });
-    // }
 
+  const API_ENDPOINT = import.meta.env.VITE_API_ENDPOINT;
 
-  const handleLogout = () => {
-    setAuth({});
-    navigate("/home/signin", { replace: true });
+  const handleLogout = async () => {
+    try {
+      const response = await fetch(`${API_ENDPOINT}/users/logout`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include',
+      });
+      if (response.status !== 200) {
+        throw new Error('Logout failed');
+      }
+      setAuth({});
+      navigate("/home/signin", { replace: true });
+    } catch (error) {
+      console.error("Logout error:", error);
+    }
   }
 
   return (
@@ -25,15 +36,15 @@ export default function Nav() {
       </div>
       <div className="flex flex-1 gap-2">
         <div className='flex-1'>
-        <input
+        {/* <input
           type="text"
           placeholder="Search"
           className="input input-bordered w-24 md:w-auto"
-        />
+        /> */}
         </div>
         {!auth.user && <div>
-          <a className='btn btn-ghost' href="/home/register">register</a>
-          <a className='btn btn-ghost' href="/home/signin">sign in</a>
+          <NavLink className='btn btn-ghost' to="/home/register">register</NavLink>
+          <NavLink className='btn btn-ghost' to="/home/signin">sign in</NavLink>
         </div>}
         {auth.user && <div className="dropdown dropdown-end">
           <div
