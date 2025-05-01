@@ -13,7 +13,6 @@ export default function Feeds() {
   const editModalRef = useRef();
 
   const { auth } = useContext(AuthContext);
-  // const loggedUserId = auth.user ? auth.user.id : null;
 
   const [addPostForm, setAddPostForm] = useState({
     title: "",
@@ -35,7 +34,12 @@ export default function Feeds() {
 
   const fetchPosts = async () => {
     try {
-      const response = await fetch(`${API_ENDPOINT}/posts?page=${page}&limit=10&sort=-createdAt`);
+      const response = await fetch(`${API_ENDPOINT}/posts?page=${page}&limit=10&sort=-createdAt`, {
+        method: "GET",
+        headers: {
+          "Content-type": "application/json"
+        },
+      });
       const responseData = await response.json();
       const { posts } = responseData.data;
       console.log(responseData);
