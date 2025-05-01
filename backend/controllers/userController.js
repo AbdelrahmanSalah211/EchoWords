@@ -55,7 +55,6 @@ const userController = {
   },
 
   updateUser: async (req, res, next) => {
-    console.log(req.body);
     const { username, email, photo } = req.body;
     const userId = req.user.id;
     try {
