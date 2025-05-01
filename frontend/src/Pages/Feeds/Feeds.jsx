@@ -13,7 +13,7 @@ export default function Feeds() {
   const editModalRef = useRef();
 
   const { auth } = useContext(AuthContext);
-  const loggedUserId = auth.user ? auth.user.id : null;
+  // const loggedUserId = auth.user ? auth.user.id : null;
 
   const [addPostForm, setAddPostForm] = useState({
     title: "",
@@ -255,9 +255,7 @@ export default function Feeds() {
         </svg>
       }
 
-
       {/* modal for adding posts */}
-
       <dialog ref={addModalRef} className="modal">
         <div className="modal-box">
           <h3 className="text-center">Add Post</h3>
@@ -305,10 +303,6 @@ export default function Feeds() {
         </div>
       </dialog>
 
-
-
-
-
       {/* modal for editing posts */}
       <dialog ref={editModalRef} className="modal">
         <div className="modal-box">
@@ -354,25 +348,6 @@ export default function Feeds() {
           </form>
         </div>
       </dialog>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     </div>
   );
 }
