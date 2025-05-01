@@ -152,14 +152,14 @@ export default function Profile() {
         throw new Error(responseData.message);
       }
       setSuccess(true);
-      const updatedUser = responseData.data;
+      const updatedUser = responseData.data.user;
       setAuth((prev) => ({
         ...prev,
         user: {
           ...prev.user,
           username: updatedUser.username,
           email: updatedUser.email,
-          photo: photoUrl ? updatedUser.photoUrl : prev.user.photo
+          photo: updatedUser.photo || prev.user.photo
         }
       }));
     } catch (error) {
