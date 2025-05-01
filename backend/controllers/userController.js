@@ -44,7 +44,8 @@ const userController = {
         user: {
           id: user._id,
           username: user.username,
-          email: user.email
+          email: user.email,
+          photo: user.photo
         }
       });
     } catch (error) {
@@ -53,7 +54,7 @@ const userController = {
     }
   },
 
-  updateUser: async (res, req, next) => {
+  updateUser: async (req, res, next) => {
     const { username, email, photo } = req.body;
     const userId = req.user.id;
     try {
@@ -81,7 +82,7 @@ const userController = {
     }
   },
 
-  deleteUser: async (res, req, next) => {
+  deleteUser: async (req, res, next) => {
     const userId = req.user.id;
     try {
       const deletedUser = await User.findByIdAndDelete(userId);
@@ -98,15 +99,15 @@ const userController = {
     }
   },
 
-  updatePassword: async (res, req, next) => {
-    const { password, newPassword } = req.body;
+  updatePassword: async (req, res, next) => {
+    const { currentPassword, newPassword } = req.body;
     const userId = req.user.id;
     try {
       const user = await User.findById(userId).select('+password');
       if (!user) {
         return next(new AppError('User not found', 404));
       }
-      const isPasswordCorrect = await user.correctPassword(password, user.password);
+      const isPasswordCorrect = await user.correctPassword(currentPassword, user.password);
       if (!isPasswordCorrect) {
         return next(new AppError('Incorrect password', 401));
       }
