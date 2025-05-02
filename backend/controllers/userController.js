@@ -1,6 +1,7 @@
 const User = require('../models/userModel.js');
 const { AppError } = require("../utils/AppError.js");
 const jwt = require('jsonwebtoken');
+const { promisify } = require('util');
 
 const userController = {
   signUp: async (req, res, next) => {
@@ -38,6 +39,16 @@ const userController = {
       const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
         expiresIn: process.env.JWT_EXPIRES_IN
       });
+
+      const refreshToken = jwt.sign( { userId: user._id }, process.env.JWT_REFRESH_SECRET, { expiresIn: process.env.JWT_REFRESH_EXPIRES_IN });
+
+      res.cookie('jwt', refreshToken, {
+        httpOnly: true,
+        secure: false,
+        sameSite: 'Strict',
+        maxAge: process.env.MAX_AGE * 1000
+      });
+
       return res.status(200).json({
         status: 'success',
         accessToken: token,
@@ -50,6 +61,56 @@ const userController = {
       });
     } catch (error) {
       console.error("Error logging in user: ", error);
+      return next(new AppError('Internal server error', 500));
+    }
+  },
+
+  refreshToken: async (req, res, next) => {
+    try {
+      const refreshToken = req.cookies.jwt;
+
+      if (!refreshToken) {
+        return next(new AppError('No refresh token found', 401));
+      }
+
+      const decoded = await promisify(jwt.verify)(refreshToken, process.env.JWT_REFRESH_SECRET);
+
+      const user = await User.findById(decoded.userId);
+      if (!user) {
+        return next(new AppError('User not found', 404));
+      }
+
+      const accessToken = jwt.sign( { userId: user._id }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRES_IN });
+
+      return res.status(200).json({
+        status: 'success',
+        accessToken,
+        user: {
+          id: user._id,
+          username: user.username,
+          email: user.email,
+          photo: user.photo
+        }
+      });
+    } catch (error) {
+      console.error("Error refreshing token:", error);
+      return next(new AppError('Internal server error', 500));
+    }
+  },
+
+  logout: async (req, res, next) => {
+    try {
+      res.clearCookie('jwt', {
+        httpOnly: true,
+        secure: false,
+        sameSite: 'strict',
+      });
+      return res.status(200).json({
+        status: 'success',
+        message: 'Successfully logged out'
+      });
+    } catch (error) {
+      console.error("Error during logout:", error);
       return next(new AppError('Internal server error', 500));
     }
   },

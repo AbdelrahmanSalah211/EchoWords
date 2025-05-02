@@ -12,6 +12,8 @@ router
 
 router.post('/signup', userController.signUp);
 router.post('/login', userController.login);
+router.get('/refresh', userController.refreshToken);
+router.post('/logout', userController.logout);
 
 router.patch('/updatePassword', authenticateUser, userController.updatePassword);
 
