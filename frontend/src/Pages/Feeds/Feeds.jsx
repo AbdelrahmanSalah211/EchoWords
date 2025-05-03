@@ -3,6 +3,7 @@ import Post from '../../Components/Post/Post'
 import { useState, useEffect, useRef, useContext } from 'react'
 import AuthContext from "../../Context/AuthProvider";
 import InfiniteScroll from 'react-infinite-scroll-component';
+import { toast } from "react-toastify";
 
 
 
@@ -42,8 +43,6 @@ export default function Feeds() {
       });
       const responseData = await response.json();
       const { posts } = responseData.data;
-      console.log(responseData);
-      console.log(posts);
       setPosts((prevPosts) => {
         const existingPostIds = new Set(prevPosts.map(post => post._id));
         const filteredNewPosts = posts.filter(post => !existingPostIds.has(post._id));
@@ -91,6 +90,9 @@ export default function Feeds() {
           method: "POST",
           body: formData
         })
+        if(imgResponse.status !== 200){
+          throw new Error("Failed to add post");
+        }
         imgData = await imgResponse.json()
       }
       const imgUrl = addPostForm.image ? imgData.data.display_url : "";
@@ -108,6 +110,9 @@ export default function Feeds() {
           },
           body: JSON.stringify(postData),
         })
+        if(response.status !== 201){
+          throw new Error("Failed to add post");
+        }
         const responseData = await response.json();
         const { post } = responseData.data;
         post.user = {
@@ -117,9 +122,11 @@ export default function Feeds() {
         }
         const newPosts = [post, ...posts ];
         setPosts(newPosts);
+        toast.success("Post added successfully");
         setAddPostForm({ title: "", body: "", image: null });
       }
     } catch (error) {
+      toast.error("Add post failed. Please try again.");
       console.error("Error adding post:", error);
     }
   }
@@ -149,6 +156,9 @@ export default function Feeds() {
           method: "POST",
           body: formData
         })
+        if(imgResponse.status !== 200){
+          throw new Error("Failed to edit post");
+        }
         imgData = await imgResponse.json()
       }
       const postId = editModalRef.current.getAttribute("data-id");
@@ -168,6 +178,9 @@ export default function Feeds() {
           },
           body: JSON.stringify(editData),
         })
+        if(response.status !== 200){
+          throw new Error("Failed to edit post");
+        }
         const responseData = await response.json();
         const { post } = responseData.data;
         post.user = {
@@ -183,25 +196,35 @@ export default function Feeds() {
           }
         });
         setPosts(newPosts);
+        toast.success("Post updated successfully");
         setEditPostForm({ title: "", body: "", image: null });
       }
     } catch (error) {
+      toast.error("Edit post failed. Please try again.");
       console.error("Error adding post:", error);
     }
     
   }
 
   const handleDeletePost = async (id) => {
-    const response = await fetch(`${API_ENDPOINT}/posts/${id}`, {
-      method: "Delete",
-      headers: {
-        "Content-type": "application/json",
-        "Authorization": `Bearer ${auth.token}`
-      },
-    });
-    const newPosts = posts.filter((post) => post._id !== id);
-    setPosts(newPosts);
-    console.log("Post deleted successfully");
+    try {
+      const response = await fetch(`${API_ENDPOINT}/posts/${id}`, {
+        method: "Delete",
+        headers: {
+          "Content-type": "application/json",
+          "Authorization": `Bearer ${auth.token}`
+        },
+      });
+      if(response.status !== 200){
+        throw new Error("Failed to delete post");
+      }
+      const newPosts = posts.filter((post) => post._id !== id);
+      setPosts(newPosts);
+      toast.success("Post deleted successfully");
+    } catch (error) {
+      toast.error("Delete post failed. Please try again.");
+      console.error("Error deleting post:", error);
+    }
   }
 
   return (
@@ -283,7 +306,6 @@ export default function Feeds() {
               accept="image/*"
               className="file-input file-input-sm file-input-ghost file-input-primary"
               onChange={imageAddOnChangeHandler}
-              // value={addPostForm.image}
             />
             <div className="flex justify-between">
               <button
@@ -332,7 +354,6 @@ export default function Feeds() {
               name='image'
               className="file-input file-input-sm file-input-ghost file-input-primary"
               onChange={imageEditOnChangeHandler}
-              // value={editPostForm.image}
             />
             <div className="flex justify-between">
               <button
