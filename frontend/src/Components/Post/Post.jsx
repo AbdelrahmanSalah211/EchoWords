@@ -46,8 +46,7 @@ export default function Post({
   return (
     <div className="border-b-2 border-gray-200 py-5">
         <div className="flex justify-between items-center mb-2">
-          {/* self justify start title and body */}
-          <h2 className="card-title">{title}</h2>
+          <h2 className="card-title text-3xl">{title}</h2>
           {loggedUserId === userId && (
             <details className="dropdown" ref={dropdownRef}>
               <summary className="btn bg-transparent hover:bg-transparent border-none shadow-none">
@@ -87,11 +86,11 @@ export default function Post({
             </details>
           )}
         </div>
-        <p className="text-sm text-gray-500">Posted by {username}</p>
-        <p>{body}</p>
+        <p className="text-sm text-gray-500 px-6">Posted by {username}</p>
+        <p className='text-lg'>{body}</p>
       {image && (
         <figure>
-          <img  className='w-[20vw]' src={image} alt="image" />
+          <img  className='w-[30vw]' src={image} alt="image" />
         </figure>
       )}
     </div>

@@ -3,10 +3,11 @@ import { useState, useRef, useEffect } from "react";
 import { NavLink, useNavigate } from "react-router";
 import AuthContext from "../../Context/AuthProvider";
 import Joi from "joi";
+import { toast } from "react-toastify";
 
 export default function UserForm({ isRegister }) {
   const schema = Joi.object({
-    username: Joi.string().min(3).required().label('Username'),
+    username: Joi.string().min(4).required().label('Username'),
   
     email: Joi.string()
       .email({ tlds: { allow: false } })
@@ -18,7 +19,7 @@ export default function UserForm({ isRegister }) {
       .required()
       .label('Password')
       .messages({
-        'string.pattern.base': `"Password" must contain at least 1 uppercase, 1 lowercase, 1 number, 1 special character and be at least 8 characters long.`,
+        'string.pattern.base': 'Password must contain at least 1 uppercase, 1 lowercase, 1 number, 1 special character and be at least 8 characters long.',
       }),
   });
 
@@ -42,7 +43,6 @@ export default function UserForm({ isRegister }) {
   const [matchFocus, setMatchFocus] = useState(false);
 
   const [errMsg, setErrMsg] = useState("");
-  const [success, setSuccess] = useState(false);
 
   const [email, setEmail] = useState("");
   const [validEmail, setValidEmail] = useState(false);
@@ -57,25 +57,18 @@ export default function UserForm({ isRegister }) {
 
   useEffect(() => {
     const { value, error } = schema.extract('username').validate(username);
-    console.log(username);
-    console.log(value);
     setValidUsername(!error);
   }, [username]);
 
   useEffect(() => {
     const { value, error } = schema.extract("email").validate(email);
-    console.log(email);
-    console.log(value);
     setValidEmail(!error);
   }, [email]);
 
   useEffect(() => {
     const { value, error } = schema.extract("password").validate(password);
-    console.log(password);
-    console.log(value);
     setValidPassword(!error);
     const match = password === matchPassword;
-    console.log(match);
     setValidMatch(match);
   }, [password, matchPassword]);
 
@@ -122,11 +115,10 @@ export default function UserForm({ isRegister }) {
             body: JSON.stringify(userData)
           })
           const data = await response.json();
-          console.log(data);
           if(response.status !== 201) {
             throw new Error(data.message);
           }
-          setSuccess(true);
+          toast.success("User registered successfully");
           navigate("/home/signin");
           setUsername("");
           setPassword("");
@@ -162,13 +154,13 @@ export default function UserForm({ isRegister }) {
           if (response.status !== 200) {
             throw new Error(data.message);
           }
-          setSuccess(true);
           setAuth({ token: data.accessToken, user: {
             id: data.user.id,
             username: data.user.username,
             email: data.user.email,
             photo: data.user.photo,
           }});
+          toast.success("User loged in successfully");
           navigate("/");
           setPassword("");
           setEmail("");
@@ -231,18 +223,7 @@ export default function UserForm({ isRegister }) {
                 usernameFocus && username && !validUsername ? "" : "hidden"
               }`}
             >
-              <span className="inline-flex items-center gap-1">
-                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none">
-                  <path
-                    stroke="currentColor"
-                    strokeWidth="1.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="m11.25 11.25 .041-.02a.75.75 0 0 1 1.063.852l-.708 2.836a.75.75 0 0 0 1.063.853l.041-.021M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9-3.75h.008v.008H12V8.25Z"
-                  />
-                </svg>
-                4 to 24 characters. Must include upper and lower case letters.
-              </span>
+              must be at least 4 characters long.
             </p>
           </div>
         )}
@@ -301,9 +282,7 @@ export default function UserForm({ isRegister }) {
                 passwordFocus && !validPassword ? "" : "hidden"
               }`}
             >
-              Must include upper and lower case letters.
-              <br />
-              Special characters allowed: <code>!@#$%</code>
+              Must contain 1 uppercase, 1 lowercase<br/>1 special character and be at least 8 characters long.
             </p>
           )}
         {!isRegister && <NavLink
