@@ -2,12 +2,18 @@ import React from 'react';
 import { useState, useEffect, useRef, useContext } from 'react';
 import AuthContext from '../../Context/AuthProvider';
 import Joi from "joi";
+import { toast } from "react-toastify";
+
 
 export default function Profile() {
+  const [isLoading, setIsLoading] = useState(true);
+
   const usernameRef = useRef();
   useEffect(() => {
-    usernameRef.current.focus();
-  }, []);
+    if(!isLoading){
+      usernameRef.current.focus();
+    }
+  }, [isLoading]);
 
   const [validUsername, setValidUsername] = useState(false);
   const [usernameFocus, setUsernameFocus] = useState(false);
@@ -18,13 +24,11 @@ export default function Profile() {
   const [matchPassword, setMatchPassword] = useState("");
   const [validMatch, setValidMatch] = useState(false);
   const [matchFocus, setMatchFocus] = useState(false);
-  const [success, setSuccess] = useState(false);
 
   const [validEmail, setValidEmail] = useState(false);
   const [emailFocus, setEmailFocus] = useState(false);
 
   const [currentPassword, setCurrentPassword] = useState("");
-  const [currentPasswordFocus, setCurrentPasswordFocus] = useState(false);
 
   const schema = Joi.object({
     username: Joi.string().min(4).required().label("Username"),
@@ -41,18 +45,28 @@ export default function Profile() {
       .required()
       .label("Password")
       .messages({
-        "string.pattern.base": `"Password" must contain at least 1 uppercase, 1 lowercase, 1 number, 1 special character and be at least 8 characters long.`,
+        "string.pattern.base": 'Password" must contain at least 1 uppercase, 1 lowercase, 1 number, 1 special character and be at least 8 characters long.',
       }),
   });
 
   const { auth, setAuth } = useContext(AuthContext);
-  console.log(auth);
 
   const [user, setUser] = useState({
-    username: auth.user.username,
-    email: auth.user.email,
+    username: "",
+    email: "",
     photo: null,
   });
+
+  useEffect(() => {
+    if(auth && auth.user){
+      setUser({
+        username: auth.user.username,
+        email: auth.user.email,
+        photo: auth.user.photo,
+      });
+      setIsLoading(false);
+    }
+  }, [auth])
 
   const [password, setPassword] = useState("");
 
@@ -129,6 +143,9 @@ export default function Profile() {
           method: "POST",
           body: formData
         })
+        if(photoResponse.status !== 200){
+          throw new Error("Editing profile failed. Please try again later.");
+        }
         photoData = await photoResponse.json()
       }
       const profileData = {
@@ -151,7 +168,7 @@ export default function Profile() {
       if (response.status !== 200) {
         throw new Error(responseData.message);
       }
-      setSuccess(true);
+      toast.success("Profile updated successfully!");
       const updatedUser = responseData.data.user;
       setAuth((prev) => ({
         ...prev,
@@ -183,23 +200,22 @@ export default function Profile() {
         },
         body: JSON.stringify(passwordData),
       });
+      if (response.status !== 200) {
+        throw new Error("Updating password failed. Please try again later.");
+      }
       const data = await response.json();
       console.log(data);
-      if (response.status !== 200) {
-        throw new Error(data.message);
-      }
       const { token } = data;
       setAuth((prev) => ({
         ...prev,
         token: token,
       }));
-      setSuccess(true);
+      toast.success("Password updated successfully!");
       setCurrentPassword("");
       setPassword("");
       setMatchPassword("");
       setValidPassword(false);
       setValidMatch(false);
-      setCurrentPasswordFocus(false);
       setPasswordFocus(false);
       setMatchFocus(false);
       setErrMsg("");
@@ -216,6 +232,14 @@ export default function Profile() {
       photo: auth.user.photo,
     });
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <span className="loading loading-spinner text-primary"></span>
+      </div>
+    );
+  }
 
   return (
     <div className="px-6 md:px-20 xl:px-60 py-10">
@@ -273,7 +297,7 @@ export default function Profile() {
               usernameFocus && user.username && !validUsername ? "" : "hidden"
             }`}
           >
-            4 to 24 characters. Must include upper and lower case letters.
+            must be at least 4 characters long.
           </p>
         </div>
 
@@ -343,8 +367,6 @@ export default function Profile() {
             id="current-password"
             className="input input-bordered"
             onChange={onCurrentPasswordChange}
-            onFocus={() => setCurrentPasswordFocus(true)}
-            onBlur={() => setCurrentPasswordFocus(false)}
             value={currentPassword}
           />
         </div>
@@ -367,13 +389,11 @@ export default function Profile() {
           />
           <p
             id="pwdnote"
-            className={`mt-1 text-xs p-2 rounded bg-neutral text-neutral-content ${
+            className={`mt-1 text-xs p-2 rounded bg-neutral text-neutral-content w-80 ${
               passwordFocus && !validPassword ? "" : "hidden"
             }`}
           >
-            Must include upper and lower case letters.
-            <br />
-            Allowed special characters: <code>!@#$%</code>
+            Must contain 1 uppercase, 1 lowercase<br/>1 special character and be at least 8 characters long.
           </p>
         </div>
 
@@ -395,7 +415,7 @@ export default function Profile() {
           />
           <p
             id="matchnote"
-            className={`mt-1 text-xs p-2 rounded bg-neutral text-neutral-content ${
+            className={`mt-1 text-xs p-2 rounded bg-neutral text-neutral-content w-80 ${
               !validMatch ? "" : "hidden"
             }`}
           >
@@ -408,7 +428,7 @@ export default function Profile() {
             type="submit"
             className="btn btn-primary"
             disabled={
-              !validPassword && !validMatch // disable button if fields are empty
+              !validPassword || !validMatch
             }
           >
             Update Password
