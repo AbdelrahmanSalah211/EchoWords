@@ -3,10 +3,10 @@ import './App.css'
 import UserForm from './Components/UserForm/UserForm'
 import Error from './Pages/Error/Error'
 import Home from './Pages/Home/Home'
-import Post from './Components/Post/Post'
 import Feeds from "./Pages/Feeds/Feeds";
 import Layout from './Components/Layout/Layout'
 import Profile from './Pages/Profile/Profile'
+import { ToastContainer } from "react-toastify";
 
 function App() {
 
@@ -14,6 +14,7 @@ function App() {
 
   return (
     <>
+      <ToastContainer position="top-center" hideProgressBar={true} autoClose={1000} />
       <Routes>
         <Route element={<Layout />}>
           <Route path="/" element={<Feeds />} />
