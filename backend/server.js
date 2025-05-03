@@ -7,7 +7,7 @@ const cookieParser = require('cookie-parser');
 const dbConnection = require('./config/database');
 const postRoutes = require('./routes/postRoutes');
 const userRoutes = require('./routes/userRoutes');
-const { errorHandler } = require('./utils/AppError');
+const { globalErrorHandling } = require('./utils/AppError');
 
 
 dbConnection();
@@ -30,7 +30,7 @@ app.use(mongoSanitize());
 app.use("/api/v1/posts", postRoutes);
 app.use("/api/v1/users", userRoutes);
 
-app.use(errorHandler);
+app.use(globalErrorHandling);
 
 const port = process.env.PORT;
 const server = app.listen(port, () => {
