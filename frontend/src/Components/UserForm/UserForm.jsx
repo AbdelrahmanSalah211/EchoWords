@@ -315,7 +315,7 @@ export default function UserForm({ isRegister }) {
             <p
               id="matchnote"
               className={`mt-1 text-xs p-2 rounded bg-black text-white ${
-                !validMatch ? "" : "hidden"
+                matchFocus && matchPassword && !validMatch ? "" : "hidden"
               }`}
             >
               Must match password.
