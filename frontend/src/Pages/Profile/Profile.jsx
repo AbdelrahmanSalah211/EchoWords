@@ -416,7 +416,7 @@ export default function Profile() {
           <p
             id="matchnote"
             className={`mt-1 text-xs p-2 rounded bg-neutral text-neutral-content w-80 ${
-              !validMatch ? "" : "hidden"
+              matchFocus && matchPassword && !validMatch ? "" : "hidden"
             }`}
           >
             Must match the new password.
