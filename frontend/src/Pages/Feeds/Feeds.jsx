@@ -27,7 +27,8 @@ export default function Feeds() {
     image: null,
   });
 
-  const fileInputRef = useRef();
+  const addFileInputRef = useRef();
+  const editFileInputRef = useRef();
 
   const [posts, setPosts] = useState([]);
   const [page, setPage] = useState(1);
@@ -128,7 +129,7 @@ export default function Feeds() {
         setPosts(newPosts);
         toast.success("Post added successfully");
         setAddPostForm({ title: "", body: "", image: null });
-        fileInputRef.current.value = ""
+        addFileInputRef.current.value = ""
       }
     } catch (error) {
       toast.error("Add post failed. Please try again.");
@@ -205,7 +206,7 @@ export default function Feeds() {
         setPosts(newPosts);
         toast.success("Post updated successfully");
         setEditPostForm({ title: "", body: "", image: null });
-        fileInputRef.current.value = ""
+        editFileInputRef.current.value = ""
       }
     } catch (error) {
       toast.error("Edit post failed. Please try again.");
@@ -313,7 +314,7 @@ export default function Feeds() {
               type="file"
               accept="image/*"
               className="file-input file-input-sm file-input-ghost file-input-primary"
-              ref={fileInputRef}
+              ref={addFileInputRef}
               onChange={imageAddOnChangeHandler}
             />
             <div className="flex justify-between">
@@ -323,7 +324,7 @@ export default function Feeds() {
                 onClick={() => {
                   addModalRef.current.close();
                   setAddPostForm({ title: "", body: "", image: null });
-                  fileInputRef.current.value = ""
+                  addFileInputRef.current.value = ""
                 }}
               >
                 Cancel
@@ -363,7 +364,7 @@ export default function Feeds() {
               accept="image/*"
               name='image'
               className="file-input file-input-sm file-input-ghost file-input-primary"
-              ref={fileInputRef}
+              ref={editFileInputRef}
               onChange={imageEditOnChangeHandler}
             />
             <div className="flex justify-between">
@@ -372,7 +373,7 @@ export default function Feeds() {
                 className="btn w-24 btn-soft self-center"
                 onClick={() => {
                   editModalRef.current.close()
-                  fileInputRef.current.value = ""
+                  editFileInputRef.current.value = ""
                 }}
               >
                 Cancel
