@@ -23,7 +23,7 @@ export default function Nav() {
         throw new Error('Logout failed');
       }
       setAuth({});
-      navigate("/home/signin", { replace: true });
+      navigate("/", { replace: true });
     } catch (error) {
       console.error("Logout error:", error);
     }

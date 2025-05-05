@@ -56,6 +56,12 @@ export default function UserForm({ isRegister }) {
   }, []);
 
   useEffect(() => {
+    if (errMsg) {
+      errRef.current.focus();
+    }
+  }, [errMsg]);
+
+  useEffect(() => {
     const { value, error } = schema.extract('username').validate(username);
     setValidUsername(!error);
   }, [username]);
@@ -81,6 +87,18 @@ export default function UserForm({ isRegister }) {
     setUsername(newUsername);
   };
 
+  const onNavigating = () => {
+    setUsername("");
+    setPassword("");
+    setEmail("");
+    setMatchPassword("");
+    setValidUsername(false);
+    setValidPassword(false);
+    setValidEmail(false);
+    setValidMatch(false);
+    setErrMsg("");
+  }
+
   const onPasswordChange = (e) => {
     const newPassword = e.target.value;
     setPassword(newPassword);
@@ -102,8 +120,8 @@ export default function UserForm({ isRegister }) {
       case true:
         {
         const userData = {
-          username: username,
-          email: email,
+          username: username.toLowerCase(),
+          email: email.toLowerCase(),
           password: password
         };
         try {
@@ -138,7 +156,7 @@ export default function UserForm({ isRegister }) {
       case false:
         {
         const userData = {
-          email: email,
+          email: email.toLowerCase(),
           password: password
         };
         try {
@@ -342,6 +360,7 @@ export default function UserForm({ isRegister }) {
         <NavLink
           to={isRegister ? "/home/signin" : "/home/register"}
           className="text-blue-600 underline"
+          onClick={onNavigating}
         >
           {isRegister ? "Sign In" : "Sign Up"}
         </NavLink>
