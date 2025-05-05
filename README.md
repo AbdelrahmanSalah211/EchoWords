@@ -29,12 +29,15 @@
 - **User Feed**
 
   - Create new posts with title, body, and image via uploading
-  - images are uploaded to Imgbb server
+  - Images are uploaded to Imgbb server
   - Edit and delete only user own blogs
   - View all users' posts
 
 - **Protected Routes**
   - Only authenticated users can access Profile page.
+ 
+- **404 Page**
+  - Shows 404 not found page
 
 ## Tech Stack
 
