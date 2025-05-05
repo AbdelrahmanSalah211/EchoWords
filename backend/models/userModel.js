@@ -44,7 +44,8 @@ const userSchema = new mongoose.Schema({
   },
   deleteURL: {
     type: String,
-    default: null
+    default: null,
+    select: false
   },
   password: {
     type: String,
