@@ -27,6 +27,8 @@ export default function Feeds() {
     image: null,
   });
 
+  const fileInputRef = useRef();
+
   const [posts, setPosts] = useState([]);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
@@ -96,10 +98,12 @@ export default function Feeds() {
         imgData = await imgResponse.json()
       }
       const imgUrl = addPostForm.image ? imgData.data.display_url : "";
+      const deleteURL = addPostForm.image ? imgData.data.delete_url : null;
       const postData = {
         title: addPostForm.title,
         body: addPostForm.body,
-        image: imgUrl
+        image: imgUrl,
+        deleteURL
       }
       if(addPostForm.title && addPostForm.body){
         const response = await fetch(`${API_ENDPOINT}/posts`, {
@@ -124,6 +128,7 @@ export default function Feeds() {
         setPosts(newPosts);
         toast.success("Post added successfully");
         setAddPostForm({ title: "", body: "", image: null });
+        fileInputRef.current.value = ""
       }
     } catch (error) {
       toast.error("Add post failed. Please try again.");
@@ -163,11 +168,13 @@ export default function Feeds() {
       }
       const postId = editModalRef.current.getAttribute("data-id");
       const imgUrl = editPostForm.image ? imgData.data.display_url : "";
+      const deleteURL = editPostForm.image ? imgData.data.delete_url : null;
 
       const editData = {
         title: editPostForm.title,
         body: editPostForm.body,
         image: imgUrl,
+        deleteURL
       }
       if(editPostForm.title && editPostForm.body) {
         const response = await fetch(`${API_ENDPOINT}/posts/${postId}`, {
@@ -198,6 +205,7 @@ export default function Feeds() {
         setPosts(newPosts);
         toast.success("Post updated successfully");
         setEditPostForm({ title: "", body: "", image: null });
+        fileInputRef.current.value = ""
       }
     } catch (error) {
       toast.error("Edit post failed. Please try again.");
@@ -305,6 +313,7 @@ export default function Feeds() {
               type="file"
               accept="image/*"
               className="file-input file-input-sm file-input-ghost file-input-primary"
+              ref={fileInputRef}
               onChange={imageAddOnChangeHandler}
             />
             <div className="flex justify-between">
@@ -314,6 +323,7 @@ export default function Feeds() {
                 onClick={() => {
                   addModalRef.current.close();
                   setAddPostForm({ title: "", body: "", image: null });
+                  fileInputRef.current.value = ""
                 }}
               >
                 Cancel
@@ -353,13 +363,17 @@ export default function Feeds() {
               accept="image/*"
               name='image'
               className="file-input file-input-sm file-input-ghost file-input-primary"
+              ref={fileInputRef}
               onChange={imageEditOnChangeHandler}
             />
             <div className="flex justify-between">
               <button
                 type='button'
                 className="btn w-24 btn-soft self-center"
-                onClick={() => editModalRef.current.close()}
+                onClick={() => {
+                  editModalRef.current.close()
+                  fileInputRef.current.value = ""
+                }}
               >
                 Cancel
               </button>
