@@ -30,14 +30,14 @@
 
   - Create new posts with title, body, and image via uploading
   - Images are uploaded to Imgbb server
-  - Edit and delete only user own blogs
+  - Edit and delete only user own blog post
   - View all users' posts
 
 - **Protected Routes**
   - Only authenticated users can access Profile page.
  
 - **404 Page**
-  - Shows 404 not found page
+  - Shows 404 not found page for other routes
 
 ## Tech Stack
 
