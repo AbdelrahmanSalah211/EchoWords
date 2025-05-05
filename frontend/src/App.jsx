@@ -6,6 +6,7 @@ import Home from './Pages/Home/Home'
 import Feeds from "./Pages/Feeds/Feeds";
 import Layout from './Components/Layout/Layout'
 import Profile from './Pages/Profile/Profile'
+import ProtectedRoute from "./ProtectedRoute/ProtectedRoute";
 import { ToastContainer } from "react-toastify";
 
 function App() {
@@ -18,7 +19,11 @@ function App() {
       <Routes>
         <Route element={<Layout />}>
           <Route path="/" element={<Feeds />} />
-          <Route path="/home/profile" element={<Profile />} />
+          <Route path="/home/profile" element={
+            <ProtectedRoute>
+              <Profile />
+            </ProtectedRoute>
+            } />
         </Route>
         <Route path="/home" element={<Home />} >
           <Route path="/home/register"  element={<UserForm isRegister={true} />} />
