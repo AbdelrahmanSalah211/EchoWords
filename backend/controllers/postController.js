@@ -5,12 +5,14 @@ const catchAsync = require("../utils/catchAsync.js");
 
 const postController = {
   createPost: catchAsync(async (req, res, next) => {
-    const { title, body, image } = req.body;
+    const { title, body, image, deleteURL } = req.body;
+    console.log(req.body);
     const userId = req.user.id;
     const newPost = await Post.create({
       title,
       body,
       image,
+      deleteURL,
       user: userId
     });
     if (!newPost) {
@@ -42,12 +44,13 @@ const postController = {
   getPost: async (req, res, next) => {},
 
   updatePost: catchAsync(async (req, res, next) => {
-    const { title, body, image } = req.body;
+    const { title, body, image, deleteURL } = req.body;
     const { postId } = req.params;
     const updatedPost = await Post.findByIdAndUpdate(postId, {
       title,
       body,
       image,
+      deleteURL
     }, {
       new: true,
       runValidators: true
@@ -65,6 +68,16 @@ const postController = {
 
   deletePost: catchAsync(async (req, res, next) => {
     const { postId } = req.params;
+    const post = await Post.findById(postId);
+    if (!post) {
+      return next(new AppError('Post not found', 404));
+    }
+    const deleteResponse = await fetch(post.deleteURL, {
+      method: 'GET'
+    });
+    if (!deleteResponse.ok) {
+      return next(new AppError('Image not deleted from cloudinary', 404));
+    }
     const deletedPost = await Post.findByIdAndDelete(postId);
     if (!deletedPost) {
       return next(new AppError('Post not deleted', 404));
