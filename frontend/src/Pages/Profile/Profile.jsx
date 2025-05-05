@@ -30,6 +30,8 @@ export default function Profile() {
 
   const [currentPassword, setCurrentPassword] = useState("");
 
+  const inputFileRef = useRef();
+
   const schema = Joi.object({
     username: Joi.string().min(4).required().label("Username"),
 
@@ -73,33 +75,42 @@ export default function Profile() {
   const [errMsg, setErrMsg] = useState("");
   const errRef = useRef();
 
+  const [updatePasswordErrorMsg, setUpdatePasswordErrorMsg] = useState("");
+  const updatePasswordErrorRef = useRef();
+
+  useEffect(() => {
+    if (errMsg) {
+      errRef.current.focus();
+    }
+  }, [errMsg]);
+
+  useEffect(() => {
+    if (updatePasswordErrorMsg) {
+      updatePasswordErrorRef.current.focus();
+    }
+  }, [updatePasswordErrorMsg]);
+
   useEffect(() => {
     const { value, error } = schema.extract("username").validate(user.username);
-    console.log(user.username);
-    console.log(value);
     setValidUsername(!error);
   }, [user.username]);
 
   useEffect(() => {
     const { value, error } = schema.extract("email").validate(user.email);
-    console.log(user.email);
-    console.log(value);
     setValidEmail(!error);
   }, [user.email]);
 
   useEffect(() => {
     const { value, error } = schema.extract("password").validate(password);
-    console.log(password);
-    console.log(value);
     setValidPassword(!error);
     const match = password === matchPassword;
-    console.log(match);
     setValidMatch(match);
   }, [password, matchPassword]);
 
   useEffect(() => {
     setErrMsg("");
-  }, [user.username, password, matchPassword, user.email]);
+    setUpdatePasswordErrorMsg("");
+  }, [user.username, currentPassword, password, matchPassword, user.email]);
 
   const onPhotoChange = (e) => {
     setUser({ ...user, photo: e.target.files[0] });
@@ -164,7 +175,6 @@ export default function Profile() {
         body: JSON.stringify(profileData),
       });
       const responseData = await response.json();
-      console.log(responseData);
       if (response.status !== 200) {
         throw new Error(responseData.message);
       }
@@ -179,6 +189,7 @@ export default function Profile() {
           photo: updatedUser.photo || prev.user.photo
         }
       }));
+      inputFileRef.current.value = "";
     } catch (error) {
       setErrMsg(error.message);
       console.error("Error updating profile:", error);
@@ -204,7 +215,6 @@ export default function Profile() {
         throw new Error("Updating password failed. Please try again later.");
       }
       const data = await response.json();
-      console.log(data);
       const { token } = data;
       setAuth((prev) => ({
         ...prev,
@@ -218,9 +228,8 @@ export default function Profile() {
       setValidMatch(false);
       setPasswordFocus(false);
       setMatchFocus(false);
-      setErrMsg("");
     } catch (error) {
-      setErrMsg(error.message);
+      setUpdatePasswordErrorMsg(error.message);
       console.error("Error updating password:", error);
     }
   };
@@ -231,6 +240,7 @@ export default function Profile() {
       email: auth.user.email,
       photo: auth.user.photo,
     });
+    inputFileRef.current.value = "";
   };
 
   if (isLoading) {
@@ -334,6 +344,7 @@ export default function Profile() {
           type="file"
           id="photo"
           accept="image/*"
+          ref={inputFileRef}
           onChange={onPhotoChange}
           className="file-input file-input-bordered w-full max-w-xs"
         />
@@ -352,6 +363,18 @@ export default function Profile() {
         </div>
       </form>
 
+      
+      {/* update password error msg */}
+      {updatePasswordErrorMsg && (
+        <p
+          ref={updatePasswordErrorRef}
+          className="alert alert-error text-sm font-semibold"
+          aria-live="assertive"
+        >
+          {updatePasswordErrorMsg}
+        </p>
+      )}
+      
       <form
         onSubmit={handleEditPassword}
         className="card bg-base-100 shadow-md p-6 flex flex-col justify-center items-center gap-4"
