@@ -1,118 +1,107 @@
 const Post = require("../models/postModel");
 const { AppError } = require("../utils/AppError.js");
 const APIFeatures = require("../utils/APIFeatures.js");
+const catchAsync = require("../utils/catchAsync.js");
 
 const postController = {
-  createPost: async (req, res, next) => {
-    const { title, body, image } = req.body;
+  createPost: catchAsync(async (req, res, next) => {
+    const { title, body, image, deleteURL } = req.body;
+    console.log(req.body);
     const userId = req.user.id;
-    try {
-      const newPost = await Post.create({
-        title,
-        body,
-        image,
-        user: userId
-      });
-      if (!newPost) {
-        return next(new AppError('Post not created', 404));
-      }
-      return res.status(201).json({
-        status: 'success',
-        data: {
-          post: newPost
-        }
-      });
-    } catch (error) {
-      console.error("Error creating post: ", error);
-      return next(new AppError('Internal server error', 500));
+    const newPost = await Post.create({
+      title,
+      body,
+      image,
+      deleteURL,
+      user: userId
+    });
+    if (!newPost) {
+      return next(new AppError('Post not created', 404));
     }
-  },
+    return res.status(201).json({
+      status: 'success',
+      data: {
+        post: newPost
+      }
+    });
+  }),
 
-  getAllPosts: async (req, res, next) => {
-    try {
-      const features = new APIFeatures (Post.find(), req.query).filter().sort().limitFields().paginate();
-      const posts = await features.query.populate('user');
-      if (!posts) {
-        return next(new AppError('No posts found', 404));
-      }
-      return res.status(200).json({
-        status: 'success',
-        results: posts.length,
-        data: {
-          posts
-        }
-      });
-    } catch (error) {
-      console.error("Error getting all posts: ", error);
-      return next(new AppError('Internal server error', 500));
+  getAllPosts: catchAsync(async (req, res, next) => {
+    const features = new APIFeatures (Post.find(), req.query).filter().sort().limitFields().paginate();
+    const posts = await features.query.populate('user');
+    if (!posts) {
+      return next(new AppError('No posts found', 404));
     }
-  },
+    return res.status(200).json({
+      status: 'success',
+      results: posts.length,
+      data: {
+        posts
+      }
+    });
+  }),
 
   getPost: async (req, res, next) => {},
 
-  updatePost: async (req, res, next) => {
-    const { title, body, image } = req.body;
+  updatePost: catchAsync(async (req, res, next) => {
+    const { title, body, image, deleteURL } = req.body;
     const { postId } = req.params;
-    try {
-      const updatedPost = await Post.findByIdAndUpdate(postId, {
-        title,
-        body,
-        image,
-      }, {
-        new: true,
-        runValidators: true
-      });
-      if (!updatedPost) {
-        return next(new AppError('Post not updated', 404));
-      }
-      return res.status(200).json({
-        status: 'success',
-        data: {
-          post: updatedPost
-        }
-      });
-    } catch (error) {
-      console.error("Error updating post: ", error);
-      return next(new AppError('Internal server error', 500));
+    const updatedPost = await Post.findByIdAndUpdate(postId, {
+      title,
+      body,
+      image,
+      deleteURL
+    }, {
+      new: true,
+      runValidators: true
+    });
+    if (!updatedPost) {
+      return next(new AppError('Post not updated', 404));
     }
-  },
+    return res.status(200).json({
+      status: 'success',
+      data: {
+        post: updatedPost
+      }
+    });
+  }),
 
-  deletePost: async (req, res, next) => {
+  deletePost: catchAsync(async (req, res, next) => {
     const { postId } = req.params;
-    try {
-      const deletedPost = await Post.findByIdAndDelete(postId);
-      if (!deletedPost) {
-        return next(new AppError('Post not deleted', 404));
-      }
-      return res.status(200).json({
-        status: 'success',
-        data: null
-      });
-    } catch (error) {
-      console.error("Error deleting post: ", error);
-      return next(new AppError('Internal server error', 500));
+    const post = await Post.findById(postId);
+    if (!post) {
+      return next(new AppError('Post not found', 404));
     }
-  },
+    const deleteResponse = await fetch(post.deleteURL, {
+      method: 'GET'
+    });
+    if (!deleteResponse.ok) {
+      return next(new AppError('Image not deleted from cloudinary', 404));
+    }
+    const deletedPost = await Post.findByIdAndDelete(postId);
+    if (!deletedPost) {
+      return next(new AppError('Post not deleted', 404));
+    }
+    return res.status(200).json({
+      status: 'success',
+      data: null
+    });
+  }),
 
-  createPosts: async (req, res, next) => {
+  createPosts: catchAsync(async (req, res, next) => {
     const { posts } = req.body;
     const userId = req.user.id;
-    try {
-      const newPosts = await Post.insertMany(posts.map(post => ({ ...post, user: userId })));
-      if (!newPosts) {
-        return next(new AppError('Posts not created', 404));
-      }
-      return res.status(201).json({
-        status: 'success',
-        data: {
-          posts: newPosts
-        }
-      });
-    } catch (error) {
-      console.error("Error creating posts: ", error);
-      return next(new AppError('Internal server error', 500));
+    const newPosts = await Post.insertMany(posts.map(post => ({ ...post, user: userId })));
+    if (!newPosts) {
+      return next(new AppError('Posts not created', 404));
     }
-  }
+    return res.status(201).json({
+      status: 'success',
+      data: {
+        posts: newPosts
+      }
+    });
+  })
 
 }
 
