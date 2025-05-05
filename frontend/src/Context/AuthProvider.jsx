@@ -5,6 +5,7 @@ const AuthContext = createContext({});
 
 export function AuthProvider({children}) {
   const [auth, setAuth] = useState({});
+  const [loading, setLoading] = useState(true);
 
   const refreshTokenFunction = async () => {
     try {
@@ -31,6 +32,8 @@ export function AuthProvider({children}) {
       }
     } catch (error) {
       console.error("Failed to refresh token on initial load:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -39,7 +42,7 @@ export function AuthProvider({children}) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{auth, setAuth}}>
+    <AuthContext.Provider value={{auth, setAuth, loading}}>
       {children}
     </AuthContext.Provider>
   )
