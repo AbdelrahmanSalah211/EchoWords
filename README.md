@@ -40,11 +40,11 @@
 
 **Frontend:**
 
-- React 19 - React Router v7 - Tailwind CSS - DaisyUI - react infinite scroll component - React Toastify - Joi
+- React 19 - React Router v7 - Tailwind CSS - DaisyUI - React infinite scroll component - React Toastify - Joi - Frame motion
 
 **Backend:**
 
-- Express - JsonWebToken - CORS - Mongoose - Bcrypt - Joi
+- Express v5 - JsonWebToken - CORS - Mongoose v8 - Bcrypt - Joi
 
 
 ## Backend Setup
